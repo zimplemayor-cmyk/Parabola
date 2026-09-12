@@ -1,0 +1,25 @@
+{
+  "name": "parabola-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Parabola launchpad smart contracts — Arc network",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network arcTestnet",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network arcMainnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/node": "^20.14.15",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.10",
+    "solc": "^0.8.24",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2"
+  }
+}

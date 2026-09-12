@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-ink text-paper font-body antialiased;
+    background-image: theme("backgroundImage.grid-fade");
+    background-attachment: fixed;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-tight;
+  }
+  ::selection {
+    background: theme("colors.ignite.DEFAULT");
+    color: theme("colors.ink.DEFAULT");
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-ignite px-6 py-3 font-display font-medium text-ink transition hover:bg-ignite-soft active:scale-[0.98];
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink-border bg-ink-surface px-6 py-3 font-display font-medium text-paper transition hover:border-stable/50 hover:text-stable active:scale-[0.98];
+  }
+  .card {
+    @apply rounded-2xl border border-ink-border bg-ink-surface;
+  }
+  .input-field {
+    @apply w-full rounded-xl border border-ink-border bg-ink px-4 py-3 font-body text-paper placeholder:text-paper-faint focus:border-stable/60 focus:outline-none;
+  }
+  .label-caps {
+    @apply font-mono text-xs uppercase tracking-[0.14em] text-paper-faint;
+  }
+}

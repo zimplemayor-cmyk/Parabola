@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+contracts/node_modules/
+
+# Next.js
+.next/
+out/
+
+# Env files — never commit real secrets
+.env
+.env.local
+.env*.local
+contracts/.env
+
+# Hardhat
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+
+# Misc
+.DS_Store
+*.log
+npm-debug.log*
+.vercel
