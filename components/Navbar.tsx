@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ParabolaWordmark } from "./ParabolaMark";
 import { WalletButton } from "./WalletButton";
+import { ThemeToggle } from "./ThemeToggle";
 
 const links = [
   { href: "/explore", label: "Explore" },
@@ -26,7 +27,10 @@ export function Navbar() {
             </Link>
           ))}
         </nav>
-        <WalletButton />
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <WalletButton />
+        </div>
       </div>
     </header>
   );

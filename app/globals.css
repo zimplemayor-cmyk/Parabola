@@ -2,9 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Theme tokens. Dark is the default (and what color-scheme:dark declares
+ * for native form controls/scrollbars) so a fresh visitor with no
+ * preference set yet still gets Parabola's intended look. [data-theme]
+ * is set by ThemeToggle.tsx: "system" (default, no attribute) follows the
+ * OS via the prefers-color-scheme query below; "light"/"dark" pin it.
+ */
+:root {
+  --ink: #0E0E17;
+  --ink-soft: #15151F;
+  --ink-surface: #1B1B28;
+  --ink-border: #2A2A3A;
+  --paper: #F4F1EC;
+  --paper-dim: #B8B6C4;
+  --paper-faint: #8B8A9A;
+}
+
+[data-theme="light"] {
+  --ink: #FAFAF7;
+  --ink-soft: #F0EFEA;
+  --ink-surface: #FFFFFF;
+  --ink-border: #E2E0D8;
+  --paper: #16151D;
+  --paper-dim: #4A4959;
+  --paper-faint: #7C7A8A;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --ink: #FAFAF7;
+    --ink-soft: #F0EFEA;
+    --ink-surface: #FFFFFF;
+    --ink-border: #E2E0D8;
+    --paper: #16151D;
+    --paper-dim: #4A4959;
+    --paper-faint: #7C7A8A;
+  }
+}
+
 @layer base {
   html {
     color-scheme: dark;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
   }
   body {
     @apply bg-ink text-paper font-body antialiased;

@@ -3,7 +3,7 @@
 import { use } from "react";
 import { useCurveForToken, useCurveData, useTokenMeta } from "@/lib/hooks";
 import { TradePanel } from "@/components/TradePanel";
-import { CurveChart } from "@/components/CurveChart";
+import { PriceChart } from "@/components/PriceChart";
 import { formatAddress, formatQuote, bpsToPercent } from "@/lib/format";
 import { explorerAddressUrl } from "@/lib/contracts";
 
@@ -49,7 +49,7 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
 
       <div className="mt-8 grid gap-8 md:grid-cols-[1fr_360px]">
         <div className="card p-6">
-          <CurveChart progress={curve ? Number(curve.progressBps) / 10_000 : 0} />
+          <PriceChart curveAddress={curveAddress} progress={curve ? Number(curve.progressBps) / 10_000 : 0} />
           <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-ink-border pt-6 text-sm sm:grid-cols-4">
             <Detail label="Total supply" value={totalSupply ? formatQuote(totalSupply, { compact: true }) : "…"} />
             <Detail

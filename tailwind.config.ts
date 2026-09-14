@@ -12,21 +12,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // ink/paper resolve through CSS variables (see globals.css) so the
+        // same utility classes (bg-ink, text-paper, etc.) automatically
+        // repaint for light mode via the [data-theme="light"] selector —
+        // no component-level dark: variants needed anywhere.
         ink: {
-          DEFAULT: "#0E0E17",
-          soft: "#15151F",
-          surface: "#1B1B28",
-          border: "#2A2A3A",
+          DEFAULT: "var(--ink)",
+          soft: "var(--ink-soft)",
+          surface: "var(--ink-surface)",
+          border: "var(--ink-border)",
         },
         paper: {
-          DEFAULT: "#F4F1EC",
-          dim: "#B8B6C4",
-          faint: "#8B8A9A",
+          DEFAULT: "var(--paper)",
+          dim: "var(--paper-dim)",
+          faint: "var(--paper-faint)",
         },
+        // Brand accent — a saturated cerise/magenta rather than the far
+        // more common orange-on-dark or purple-on-dark "crypto app"
+        // accents, paired against the existing cool mint for the
+        // volatile/stable duality described below.
         ignite: {
-          DEFAULT: "#FF6B35",
-          soft: "#FFA36C",
-          dim: "#7A3A22",
+          DEFAULT: "#FF2D78",
+          soft: "#FF6FA6",
+          dim: "#5C1233",
         },
         stable: {
           DEFAULT: "#3FD0C9",
@@ -46,7 +54,7 @@ const config: Config = {
       },
       backgroundImage: {
         "grid-fade":
-          "linear-gradient(to bottom, transparent, #0E0E17), radial-gradient(circle at 20% 20%, rgba(255,107,53,0.10), transparent 45%), radial-gradient(circle at 80% 0%, rgba(63,208,201,0.08), transparent 40%)",
+          "linear-gradient(to bottom, transparent, var(--ink)), radial-gradient(circle at 20% 20%, rgba(255,45,120,0.10), transparent 45%), radial-gradient(circle at 80% 0%, rgba(63,208,201,0.08), transparent 40%)",
       },
     },
   },

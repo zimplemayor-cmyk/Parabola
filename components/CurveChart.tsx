@@ -34,14 +34,14 @@ export function CurveChart({
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label="Bonding curve price chart">
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FF6B35" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#FF6B35" stopOpacity="0" />
+          <stop offset="0%" stopColor="#FF2D78" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#FF2D78" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={`${path} L${width - 8},${height} L8,${height} Z`} fill={`url(#${gradientId})`} />
-      <path d={path} stroke="#FF6B35" strokeWidth={3} fill="none" strokeLinecap="round" />
+      <path d={path} stroke="#FF2D78" strokeWidth={3} fill="none" strokeLinecap="round" />
       {/* Graduation ring at the curve's end, echoing the logomark */}
-      <circle cx={width - 8} cy={8} r={6} stroke="#3FD0C9" strokeWidth={2.5} fill="#0E0E17" />
+      <circle cx={width - 8} cy={8} r={6} stroke="#3FD0C9" strokeWidth={2.5} className="fill-ink" />
       {showMarker && (
         <g>
           <line x1={markerX} y1={markerY} x2={markerX} y2={height} stroke="#3FD0C9" strokeWidth={1} strokeDasharray="4 4" opacity={0.5} />
