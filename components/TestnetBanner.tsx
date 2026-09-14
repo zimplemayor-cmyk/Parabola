@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { activeChain } from "@/lib/chains";
+import { SwitchNetworkButton } from "./SwitchNetworkButton";
 
 const FAUCET_URL = "https://faucet.circle.com";
 
@@ -27,6 +28,7 @@ export function TestnetBanner() {
           USDC in your wallet to pay gas or trade here.
         </p>
         <div className="flex shrink-0 items-center gap-3">
+          <SwitchNetworkButton />
           <a
             href={FAUCET_URL}
             target="_blank"

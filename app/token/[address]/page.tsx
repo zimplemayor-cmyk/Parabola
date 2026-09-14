@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { useCurveForToken, useCurveData, useTokenMeta } from "@/lib/hooks";
+import { useCurveForToken, useCurveData, useTokenMeta, useMetadataURIForToken, useLaunchMetadata } from "@/lib/hooks";
 import { TradePanel } from "@/components/TradePanel";
 import { PriceChart } from "@/components/PriceChart";
 import { formatAddress, formatQuote, bpsToPercent } from "@/lib/format";
@@ -13,6 +13,8 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
   const { data: curveAddress, isLoading: loadingCurve } = useCurveForToken(tokenAddress);
   const { name, symbol, totalSupply } = useTokenMeta(tokenAddress);
   const { curve } = useCurveData(curveAddress);
+  const metadataURI = useMetadataURIForToken(tokenAddress);
+  const { metadata, imageUrl } = useLaunchMetadata(metadataURI);
 
   if (!loadingCurve && curveAddress === "0x0000000000000000000000000000000000000000") {
     return (
@@ -25,17 +27,26 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
   return (
     <div className="mx-auto max-w-6xl px-6 py-12">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="label-caps">${symbol ?? "…"}</p>
-          <h1 className="mt-1 font-display text-3xl font-semibold text-paper">{name ?? "Loading…"}</h1>
-          <a
-            href={explorerAddressUrl(tokenAddress)}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="mt-1 inline-block font-mono text-xs text-paper-faint hover:text-stable"
-          >
-            {formatAddress(tokenAddress)} ↗
-          </a>
+        <div className="flex items-start gap-4">
+          {imageUrl ? (
+            <img src={imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-2xl object-cover" />
+          ) : (
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-ink-surface text-lg font-semibold text-paper-faint">
+              {(symbol ?? name ?? "?").slice(0, 1)}
+            </div>
+          )}
+          <div>
+            <p className="label-caps">${symbol ?? "…"}</p>
+            <h1 className="mt-1 font-display text-3xl font-semibold text-paper">{name ?? "Loading…"}</h1>
+            <a
+              href={explorerAddressUrl(tokenAddress)}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="mt-1 inline-block font-mono text-xs text-paper-faint hover:text-stable"
+            >
+              {formatAddress(tokenAddress)} ↗
+            </a>
+          </div>
         </div>
         <div className="flex gap-6 text-right">
           <Stat label="Price" value={curve ? formatMicroPrice(curve.currentPrice) : "…"} />
@@ -46,6 +57,8 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
           />
         </div>
       </div>
+
+      {metadata?.description && <p className="mt-4 max-w-2xl text-sm text-paper-dim">{metadata.description}</p>}
 
       <div className="mt-8 grid gap-8 md:grid-cols-[1fr_360px]">
         <div className="card p-6">

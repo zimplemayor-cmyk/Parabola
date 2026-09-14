@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from "wagmi";
 import { parseEventLogs } from "viem";
 import { FACTORY_ADDRESS, LaunchFactoryAbi, FACTORY_CONFIGURED } from "@/lib/contracts";
 import { parseQuote } from "@/lib/format";
+import { uploadImage, uploadMetadata } from "@/lib/upload";
 
 const MAX_NAME = 32;
 const MAX_SYMBOL = 12;
+const MAX_DESCRIPTION = 280;
 const VESTING_OPTIONS = [
   { label: "90 days (minimum)", seconds: 90 * 86400 },
   { label: "180 days", seconds: 180 * 86400 },
@@ -15,13 +17,21 @@ const VESTING_OPTIONS = [
   { label: "2 years", seconds: 2 * 365 * 86400 },
 ];
 
+type UploadStage = "idle" | "image" | "metadata" | "error";
+
 export function LaunchForm() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const [track, setTrack] = useState<"meme" | "builder">("meme");
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
-  const [metadataURI, setMetadataURI] = useState("");
+  const [description, setDescription] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [uploadStage, setUploadStage] = useState<UploadStage>("idle");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [teamPct, setTeamPct] = useState(10);
   const [vestingSeconds, setVestingSeconds] = useState(VESTING_OPTIONS[1].seconds);
   const [initialBuy, setInitialBuy] = useState("");
@@ -45,9 +55,54 @@ export function LaunchForm() {
   const nameError = name.length > 0 && name.length > MAX_NAME ? `Max ${MAX_NAME} characters` : null;
   const symbolError = symbol.length > 0 && symbol.length > MAX_SYMBOL ? `Max ${MAX_SYMBOL} characters` : null;
   const canSubmit =
-    isConnected && name.length > 0 && name.length <= MAX_NAME && symbol.length > 0 && symbol.length <= MAX_SYMBOL;
+    isConnected &&
+    name.length > 0 &&
+    name.length <= MAX_NAME &&
+    symbol.length > 0 &&
+    symbol.length <= MAX_SYMBOL &&
+    uploadStage !== "image" &&
+    uploadStage !== "metadata";
 
-  function submit() {
+  function pickImage(file: File | undefined) {
+    setImageError(null);
+    if (!file) return;
+    if (!["image/png", "image/jpeg", "image/gif", "image/webp"].includes(file.type)) {
+      setImageError("Use PNG, JPEG, GIF, or WEBP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError("Image must be under 5MB.");
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  async function submit() {
+    setUploadError(null);
+    let metadataURI = "";
+
+    // Uploads happen from the creator's own device — chosen via the file
+    // picker below, not a pasted link — then pinned to IPFS through our
+    // own server route (keeps the pinning API key server-side) before the
+    // on-chain launch call fires.
+    if (imageFile || description) {
+      try {
+        let imageURI: string | undefined;
+        if (imageFile) {
+          setUploadStage("image");
+          imageURI = await uploadImage(imageFile);
+        }
+        setUploadStage("metadata");
+        metadataURI = await uploadMetadata({ name, symbol, description: description || undefined, image: imageURI });
+        setUploadStage("idle");
+      } catch (e) {
+        setUploadStage("error");
+        setUploadError(e instanceof Error ? e.message : "Upload failed.");
+        return;
+      }
+    }
+
     const value = initialBuy ? parseQuote(initialBuy) : 0n;
     if (track === "meme") {
       writeContract({
@@ -71,7 +126,10 @@ export function LaunchForm() {
   if (isSuccess && launchedToken) {
     return (
       <div className="card p-8 text-center">
-        <p className="text-stable">Launch confirmed.</p>
+        {imagePreview && (
+          <img src={imagePreview} alt="" className="mx-auto h-20 w-20 rounded-2xl object-cover" />
+        )}
+        <p className="mt-4 text-stable">Launch confirmed.</p>
         <h2 className="mt-2 font-display text-2xl font-semibold text-paper">{name} is live</h2>
         <a href={`/token/${launchedToken}`} className="btn-primary mt-6 inline-flex">
           View token page
@@ -122,16 +180,56 @@ export function LaunchForm() {
           />
         </Field>
 
-        <Field
-          label="Metadata URI"
-          hint="optional"
-          help="A link to a JSON file with { name, description, image, links }. Host it anywhere — IPFS, a pinning service, a gist."
-        >
+        <Field label="Token image" hint="optional" help="PNG, JPEG, GIF, or WEBP, up to 5MB. Uploaded straight from your device — no link needed.">
           <input
-            className="input-field"
-            value={metadataURI}
-            onChange={(e) => setMetadataURI(e.target.value)}
-            placeholder="ipfs://... or https://..."
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/gif,image/webp"
+            onChange={(e) => pickImage(e.target.files?.[0])}
+            className="hidden"
+          />
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-ink-border text-paper-faint transition hover:border-ignite/50 hover:text-ignite"
+            >
+              {imagePreview ? (
+                <img src={imagePreview} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-2xl">+</span>
+              )}
+            </button>
+            <div className="text-xs text-paper-faint">
+              {imageFile ? (
+                <>
+                  <p className="text-paper-dim">{imageFile.name}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                    className="mt-1 text-ignite-soft hover:text-ignite"
+                  >
+                    Remove
+                  </button>
+                </>
+              ) : (
+                <p>Tap to choose an image from your device.</p>
+              )}
+            </div>
+          </div>
+          {imageError && <p className="mt-1.5 text-xs text-ignite-soft">{imageError}</p>}
+        </Field>
+
+        <Field label="Description" hint={`${description.length}/${MAX_DESCRIPTION} · optional`}>
+          <textarea
+            className="input-field min-h-[80px] resize-none"
+            value={description}
+            onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESCRIPTION))}
+            placeholder="What is this token about?"
           />
         </Field>
 
@@ -182,6 +280,7 @@ export function LaunchForm() {
           Factory address not configured — set NEXT_PUBLIC_FACTORY_ADDRESS in .env after deploying the contracts.
         </p>
       )}
+      {uploadError && <p className="mt-6 text-xs text-ignite-soft">{uploadError}</p>}
       {error && <p className="mt-6 text-xs text-ignite-soft">{error.message.slice(0, 200)}</p>}
 
       <button
@@ -191,11 +290,15 @@ export function LaunchForm() {
       >
         {!isConnected
           ? "Connect wallet to launch"
-          : isPending
-            ? "Confirm in wallet…"
-            : isConfirming
-              ? "Launching…"
-              : `Launch on Parabola`}
+          : uploadStage === "image"
+            ? "Uploading image…"
+            : uploadStage === "metadata"
+              ? "Pinning metadata…"
+              : isPending
+                ? "Confirm in wallet…"
+                : isConfirming
+                  ? "Launching…"
+                  : `Launch on Parabola`}
       </button>
       <p className="mt-3 text-center text-xs text-paper-faint">Chain ID {chainId} · {address ?? "not connected"}</p>
     </div>

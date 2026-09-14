@@ -1,7 +1,89 @@
 "use client";
 
-import { useReadContract, useReadContracts } from "wagmi";
+import { useEffect, useState } from "react";
+import { useReadContract, useReadContracts, usePublicClient } from "wagmi";
 import { FACTORY_ADDRESS, LaunchFactoryAbi, BondingCurveAbi, LaunchTokenAbi } from "./contracts";
+import { resolveImageUrl } from "./format";
+
+export interface LaunchMetadata {
+  name?: string;
+  description?: string;
+  image?: string;
+  links?: { website?: string; x?: string; telegram?: string };
+}
+
+// Module-level cache: the same metadataURI is fetched by every TokenCard
+// showing that launch plus its own token page, and the content behind an
+// IPFS URI never changes, so there's no reason to re-fetch or invalidate.
+const metadataCache = new Map<string, LaunchMetadata>();
+
+/** Fetches a launch's metadata JSON (set via the upload flow in
+ *  LaunchForm) and resolves its `image` field to a displayable URL. */
+export function useLaunchMetadata(metadataURI: string | undefined) {
+  const [metadata, setMetadata] = useState<LaunchMetadata | null>(
+    metadataURI ? (metadataCache.get(metadataURI) ?? null) : null
+  );
+
+  useEffect(() => {
+    if (!metadataURI) return;
+    const cached = metadataCache.get(metadataURI);
+    if (cached) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronous cache hit, no async work needed
+      setMetadata(cached);
+      return;
+    }
+    const url = resolveImageUrl(metadataURI); // metadataURI itself is commonly ipfs://, same resolution as an image URI
+    if (!url) return;
+    let cancelled = false;
+    fetch(url)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json: LaunchMetadata | null) => {
+        if (cancelled || !json) return;
+        metadataCache.set(metadataURI, json);
+        setMetadata(json);
+      })
+      .catch(() => {
+        /* no metadata JSON at this URI, or it's unreachable — token page falls back to name/symbol only */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [metadataURI]);
+
+  return { metadata, imageUrl: resolveImageUrl(metadata?.image) };
+}
+
+/** Looks up a single launch's metadataURI directly from its token address,
+ *  via the indexed LaunchCreated log — used on the token detail page,
+ *  which doesn't have the full LaunchSummary the explore list does. */
+export function useMetadataURIForToken(tokenAddress: `0x${string}` | undefined) {
+  const client = usePublicClient();
+  const [metadataURI, setMetadataURI] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (!tokenAddress || !client || !FACTORY_ADDRESS) return;
+    let cancelled = false;
+    (client as any)
+      .getLogs({
+        address: FACTORY_ADDRESS,
+        abi: LaunchFactoryAbi,
+        eventName: "LaunchCreated",
+        args: { token: tokenAddress },
+        fromBlock: "earliest",
+        toBlock: "latest",
+      })
+      .then((logs: any[]) => {
+        if (cancelled || logs.length === 0) return;
+        setMetadataURI(logs[0].args.metadataURI as string);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [tokenAddress, client]);
+
+  return metadataURI;
+}
 
 export interface LaunchSummary {
   token: `0x${string}`;

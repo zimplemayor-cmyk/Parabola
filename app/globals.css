@@ -10,34 +10,34 @@
  * OS via the prefers-color-scheme query below; "light"/"dark" pin it.
  */
 :root {
-  --ink: #0E0E17;
-  --ink-soft: #15151F;
-  --ink-surface: #1B1B28;
-  --ink-border: #2A2A3A;
-  --paper: #F4F1EC;
-  --paper-dim: #B8B6C4;
-  --paper-faint: #8B8A9A;
+  --ink: #0E141A;
+  --ink-soft: #131B22;
+  --ink-surface: #182129;
+  --ink-border: #263340;
+  --paper: #F5FAFC;
+  --paper-dim: #A9B7BF;
+  --paper-faint: #78868E;
 }
 
 [data-theme="light"] {
-  --ink: #FAFAF7;
-  --ink-soft: #F0EFEA;
+  --ink: #FFFFFF;
+  --ink-soft: #F3F9FB;
   --ink-surface: #FFFFFF;
-  --ink-border: #E2E0D8;
-  --paper: #16151D;
-  --paper-dim: #4A4959;
-  --paper-faint: #7C7A8A;
+  --ink-border: #DCE7EB;
+  --paper: #0E141A;
+  --paper-dim: #4C5A62;
+  --paper-faint: #7C8A92;
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --ink: #FAFAF7;
-    --ink-soft: #F0EFEA;
+    --ink: #FFFFFF;
+    --ink-soft: #F3F9FB;
     --ink-surface: #FFFFFF;
-    --ink-border: #E2E0D8;
-    --paper: #16151D;
-    --paper-dim: #4A4959;
-    --paper-faint: #7C7A8A;
+    --ink-border: #DCE7EB;
+    --paper: #0E141A;
+    --paper-dim: #4C5A62;
+    --paper-faint: #7C8A92;
   }
 }
 

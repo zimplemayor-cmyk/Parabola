@@ -34,12 +34,12 @@ export function CurveChart({
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label="Bonding curve price chart">
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FF2D78" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#FF2D78" stopOpacity="0" />
+          <stop offset="0%" stopColor="#2BB6E0" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#2BB6E0" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={`${path} L${width - 8},${height} L8,${height} Z`} fill={`url(#${gradientId})`} />
-      <path d={path} stroke="#FF2D78" strokeWidth={3} fill="none" strokeLinecap="round" />
+      <path d={path} stroke="#2BB6E0" strokeWidth={3} fill="none" strokeLinecap="round" />
       {/* Graduation ring at the curve's end, echoing the logomark */}
       <circle cx={width - 8} cy={8} r={6} stroke="#3FD0C9" strokeWidth={2.5} className="fill-ink" />
       {showMarker && (

@@ -3,6 +3,7 @@
 import { useAccount, useConnect, useDisconnect, useBalance } from "wagmi";
 import { useState, useRef, useEffect } from "react";
 import { formatAddress, formatQuote } from "@/lib/format";
+import { SwitchNetworkButton } from "./SwitchNetworkButton";
 
 export function WalletButton() {
   const { address, isConnected, chain } = useAccount();
@@ -42,7 +43,8 @@ export function WalletButton() {
       {open && (
         <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-ink-border bg-ink-surface p-3 shadow-xl">
           <p className="label-caps">{chain?.name ?? "Unknown network"}</p>
-          <p className="mt-1 font-mono text-sm text-paper">
+          <SwitchNetworkButton className="mt-2" />
+          <p className="mt-2 font-mono text-sm text-paper">
             {balance ? `${formatQuote(balance.value)} USDC` : "—"}
           </p>
           <button

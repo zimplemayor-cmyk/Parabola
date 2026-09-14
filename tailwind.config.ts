@@ -27,14 +27,13 @@ const config: Config = {
           dim: "var(--paper-dim)",
           faint: "var(--paper-faint)",
         },
-        // Brand accent — a saturated cerise/magenta rather than the far
-        // more common orange-on-dark or purple-on-dark "crypto app"
-        // accents, paired against the existing cool mint for the
-        // volatile/stable duality described below.
+        // Brand accent — "iced sea": a glacial blue against crisp white,
+        // rather than the far more common orange/purple/magenta-on-dark
+        // "crypto app" accents.
         ignite: {
-          DEFAULT: "#FF2D78",
-          soft: "#FF6FA6",
-          dim: "#5C1233",
+          DEFAULT: "#2BB6E0",
+          soft: "#8FE2F5",
+          dim: "#0C3A4A",
         },
         stable: {
           DEFAULT: "#3FD0C9",
@@ -54,7 +53,7 @@ const config: Config = {
       },
       backgroundImage: {
         "grid-fade":
-          "linear-gradient(to bottom, transparent, var(--ink)), radial-gradient(circle at 20% 20%, rgba(255,45,120,0.10), transparent 45%), radial-gradient(circle at 80% 0%, rgba(63,208,201,0.08), transparent 40%)",
+          "linear-gradient(to bottom, transparent, var(--ink)), radial-gradient(circle at 20% 20%, rgba(43,182,224,0.10), transparent 45%), radial-gradient(circle at 80% 0%, rgba(63,208,201,0.08), transparent 40%)",
       },
     },
   },

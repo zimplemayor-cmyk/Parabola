@@ -26,7 +26,7 @@ export function CandleChart({
       {candles.map((c, i) => {
         const x = padding + i * slot + slot / 2;
         const up = c.close >= c.open;
-        const color = up ? "#3FD0C9" : "#FF2D78";
+        const color = up ? "#2BB6E0" : "var(--paper)";
         const bodyTop = y(Math.max(c.open, c.close));
         const bodyBottom = y(Math.min(c.open, c.close));
         return (
@@ -37,7 +37,9 @@ export function CandleChart({
               y={bodyTop}
               width={bodyWidth}
               height={Math.max(1.5, bodyBottom - bodyTop)}
-              fill={color}
+              fill={up ? color : "none"}
+              stroke={up ? "none" : color}
+              strokeWidth={up ? 0 : 1.5}
               rx={1}
             />
           </g>

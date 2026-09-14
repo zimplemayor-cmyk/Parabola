@@ -49,7 +49,7 @@ export function SplashIntro() {
       aria-hidden="true"
     >
       <div className="splash-mark">
-        <ParabolaMark className="h-20 w-20 text-ignite drop-shadow-[0_0_28px_rgba(255,45,120,0.35)]" />
+        <ParabolaMark className="h-20 w-20 text-ignite drop-shadow-[0_0_28px_rgba(43,182,224,0.4)]" />
       </div>
       <style>{`
         .splash-mark {

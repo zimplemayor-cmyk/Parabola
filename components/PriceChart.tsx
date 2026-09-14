@@ -114,7 +114,7 @@ function LineFromCandles({ candles }: { candles: ReturnType<typeof tradesToCandl
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label="Price line chart">
-      <path d={path} stroke="#FF2D78" strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={path} stroke="#2BB6E0" strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
