@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance } from "wagmi";
 import { BondingCurveAbi, LaunchTokenAbi } from "@/lib/contracts";
-import { formatQuote, formatToken, parseUnitsSafe } from "@/lib/format";
+import { formatQuote, formatNativeBalance, formatToken, parseUnitsSafe } from "@/lib/format";
 import type { CurveData } from "@/lib/hooks";
 
 const SLIPPAGE_BPS = 100n; // 1% default tolerance
@@ -157,7 +157,7 @@ export function TradePanel({
           Balance:{" "}
           {side === "buy"
             ? usdcBalance
-              ? `${formatQuote(usdcBalance.value)} USDC`
+              ? `${formatNativeBalance(usdcBalance.value)} USDC`
               : "N/A"
             : tokenBalance !== undefined
               ? `${formatToken(tokenBalance as bigint, { compact: true })} ${symbol}`

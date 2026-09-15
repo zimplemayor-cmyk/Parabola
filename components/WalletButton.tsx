@@ -2,7 +2,7 @@
 
 import { useAccount, useConnect, useDisconnect, useBalance } from "wagmi";
 import { useState, useRef, useEffect } from "react";
-import { formatAddress, formatQuote } from "@/lib/format";
+import { formatAddress, formatNativeBalance } from "@/lib/format";
 import { SwitchNetworkButton } from "./SwitchNetworkButton";
 
 export function WalletButton() {
@@ -45,7 +45,7 @@ export function WalletButton() {
           <p className="label-caps">{chain?.name ?? "Unknown network"}</p>
           <SwitchNetworkButton className="mt-2" />
           <p className="mt-2 font-mono text-sm text-paper">
-            {balance ? `${formatQuote(balance.value)} USDC` : "N/A"}
+            {balance ? `${formatNativeBalance(balance.value)} USDC` : "N/A"}
           </p>
           <button
             onClick={() => {

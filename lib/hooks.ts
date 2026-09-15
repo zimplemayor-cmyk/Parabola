@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useReadContract, useReadContracts, usePublicClient } from "wagmi";
-import { FACTORY_ADDRESS, LaunchFactoryAbi, BondingCurveAbi, LaunchTokenAbi } from "./contracts";
+import { FACTORY_ADDRESS, FACTORY_DEPLOY_BLOCK, LaunchFactoryAbi, BondingCurveAbi, LaunchTokenAbi } from "./contracts";
 import { resolveImageUrl } from "./format";
+import { getLogsChunked } from "./onchainLogs";
 
 export interface LaunchMetadata {
   name?: string;
@@ -64,15 +65,16 @@ export function useMetadataURIForToken(tokenAddress: `0x${string}` | undefined) 
   useEffect(() => {
     if (!tokenAddress || !client || !FACTORY_ADDRESS) return;
     let cancelled = false;
-    (client as any)
-      .getLogs({
-        address: FACTORY_ADDRESS,
-        abi: LaunchFactoryAbi,
-        eventName: "LaunchCreated",
-        args: { token: tokenAddress },
-        fromBlock: 0n,
-        toBlock: "latest",
-      })
+    client
+      .getBlockNumber()
+      .then((latest: bigint) =>
+        getLogsChunked(
+          client,
+          { address: FACTORY_ADDRESS, abi: LaunchFactoryAbi, eventName: "LaunchCreated", args: { token: tokenAddress } },
+          FACTORY_DEPLOY_BLOCK,
+          latest
+        )
+      )
       .then((logs: any[]) => {
         if (cancelled || logs.length === 0) return;
         setMetadataURI(logs[0].args.metadataURI as string);

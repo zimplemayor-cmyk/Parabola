@@ -1,5 +1,6 @@
 import type { PublicClient } from "viem";
 import { BondingCurveAbi } from "./contracts";
+import { getLogsChunked } from "./onchainLogs";
 
 export interface Trade {
   blockNumber: bigint;
@@ -17,63 +18,16 @@ export interface Candle {
 }
 
 /**
- * Reads every Buy/Sell event ever emitted by a curve and derives an implied
- * trade price from each (quoteIn/tokensOut for buys, quoteOut/tokensIn for
- * sells), real executed prices, not the theoretical curve shape. This is a
- * client-side read of contract logs; there's no backend indexer behind it,
- * so on a brand-new or quiet token this can come back with very few (or
- * zero) trades. Callers should handle that case explicitly rather than
- * rendering an empty/misleading chart.
- */
-const MAX_CHUNK_BLOCKS = 5_000n;
-
-/** Fetches one event across a block range in bounded chunks, since most Arc
- *  RPC providers reject (or silently fail on) a single "earliest to latest"
- *  query. Halves the chunk size and retries on a range-too-large error
- *  rather than assuming a fixed limit that may not match every provider. */
-async function getLogsChunked(
-  client: any,
-  curveAddress: `0x${string}`,
-  eventName: "Buy" | "Sell",
-  fromBlock: bigint,
-  toBlock: bigint
-): Promise<any[]> {
-  const results: any[] = [];
-  let cursor = fromBlock;
-  let chunk = MAX_CHUNK_BLOCKS;
-
-  while (cursor <= toBlock) {
-    const end = cursor + chunk > toBlock ? toBlock : cursor + chunk;
-    try {
-      const logs = await client.getLogs({
-        address: curveAddress,
-        abi: BondingCurveAbi,
-        eventName,
-        fromBlock: cursor,
-        toBlock: end,
-      });
-      results.push(...logs);
-      cursor = end + 1n;
-    } catch (err) {
-      // Provider rejected this range (block-range or response-size limit).
-      // Shrink and retry rather than giving up on the whole fetch.
-      if (chunk <= 50n) throw err; // too small to shrink further, a real error
-      chunk = chunk / 4n;
-    }
-  }
-  return results;
-}
-
-/**
  * Reads every Buy/Sell event a curve has emitted, from its own creation
- * block (never "earliest", which most providers reject or choke on) up to
- * the current block, in bounded chunks, and derives an implied trade price
- * from each (quoteIn/tokensOut for buys, quoteOut/tokensIn for sells): real
- * executed prices, not the theoretical curve shape. This is a client-side
- * read of contract logs; there's no backend indexer behind it, so on a
- * brand-new or quiet token this can come back with very few (or zero)
- * trades. Callers should handle that case explicitly rather than rendering
- * an empty/misleading chart.
+ * block (never block 0 or "earliest", both of which most providers reject
+ * or choke on for a chain this many blocks deep) up to the current block,
+ * in bounded chunks, and derives an implied trade price from each
+ * (quoteIn/tokensOut for buys, quoteOut/tokensIn for sells): real executed
+ * prices, not the theoretical curve shape. This is a client-side read of
+ * contract logs; there's no backend indexer behind it, so on a brand-new or
+ * quiet token this can come back with very few (or zero) trades. Callers
+ * should handle that case explicitly rather than rendering an empty or
+ * misleading chart.
  */
 export async function fetchTrades(
   client: PublicClient,
@@ -81,10 +35,10 @@ export async function fetchTrades(
   fromBlock: bigint = 0n
 ): Promise<Trade[]> {
   const anyClient = client as any;
-  const latest = await anyClient.getBlockNumber();
+  const latest: bigint = await anyClient.getBlockNumber();
   const [buyLogs, sellLogs] = await Promise.all([
-    getLogsChunked(anyClient, curveAddress, "Buy", fromBlock, latest),
-    getLogsChunked(anyClient, curveAddress, "Sell", fromBlock, latest),
+    getLogsChunked(anyClient, { address: curveAddress, abi: BondingCurveAbi, eventName: "Buy" }, fromBlock, latest),
+    getLogsChunked(anyClient, { address: curveAddress, abi: BondingCurveAbi, eventName: "Sell" }, fromBlock, latest),
   ]);
 
   const raw = [
@@ -102,16 +56,29 @@ export async function fetchTrades(
 
   if (raw.length === 0) return [];
 
-  // Resolve timestamps for the distinct blocks involved (batched, one call
-  // per unique block rather than per trade).
-  const uniqueBlocks = Array.from(new Set(raw.map((t) => t.blockNumber)));
-  const blocks = await Promise.all(uniqueBlocks.map((bn) => client.getBlock({ blockNumber: bn })));
-  const timestampByBlock = new Map(uniqueBlocks.map((bn, i) => [bn, Number(blocks[i].timestamp)]));
+  // Timestamps by interpolation, not one getBlock call per unique trade
+  // block. Fetching a real timestamp for every block a token with hundreds
+  // of trades touched is the difference between this loading in under a
+  // second and visibly hanging. Arc's block time is documented as a
+  // constant ~500ms, so two reference points (the latest block, and either
+  // the earliest trade's block or 5000 blocks back, whichever is older)
+  // give an accurate seconds-per-block rate without scanning every block
+  // in between.
+  const minBlock = raw.reduce((min, t) => (t.blockNumber < min ? t.blockNumber : min), raw[0].blockNumber);
+  const referenceStart = minBlock < latest - 5000n ? minBlock : latest - 5000n > 0n ? latest - 5000n : 0n;
+  const [latestBlockInfo, startBlockInfo] = await Promise.all([
+    client.getBlock({ blockNumber: latest }),
+    client.getBlock({ blockNumber: referenceStart }),
+  ]);
+  const blockSpan = latest - referenceStart;
+  const secondsPerBlock =
+    blockSpan > 0n ? (Number(latestBlockInfo.timestamp) - Number(startBlockInfo.timestamp)) / Number(blockSpan) : 0.5;
+  const latestTimestamp = Number(latestBlockInfo.timestamp);
 
   const trades: Trade[] = raw
     .map((t) => ({
       blockNumber: t.blockNumber,
-      timestamp: timestampByBlock.get(t.blockNumber) ?? 0,
+      timestamp: Math.round(latestTimestamp - Number(latest - t.blockNumber) * secondsPerBlock),
       // 18-decimal token amount, quote is 6-decimal (USDC), normalize to
       // quote-per-whole-token in real units.
       price: (Number(t.quote) / 1e6) / (Number(t.tokens) / 1e18),
