@@ -8,7 +8,15 @@ import { fetchCreatorFeesEarned } from "@/lib/trades";
 import { formatQuote, formatToken } from "@/lib/format";
 import { LaunchTokenAbi } from "@/lib/contracts";
 
-export function ProfileTokenRow({ launch, address }: { launch: LaunchSummary; address: `0x${string}` }) {
+export function ProfileTokenRow({
+  launch,
+  address,
+  onFeesLoaded,
+}: {
+  launch: LaunchSummary;
+  address: `0x${string}`;
+  onFeesLoaded?: (token: string, fees: bigint) => void;
+}) {
   const { name, symbol } = useTokenMeta(launch.token);
   const { curve } = useCurveData(launch.curve);
   const { imageUrl } = useLaunchMetadata(launch.metadataURI);
@@ -27,7 +35,9 @@ export function ProfileTokenRow({ launch, address }: { launch: LaunchSummary; ad
     let cancelled = false;
     fetchCreatorFeesEarned(client, launch.curve, 0n, curve.creatorFeeBps, curve.protocolFeeBps)
       .then((fees) => {
-        if (!cancelled) setFeesEarned(fees);
+        if (cancelled) return;
+        setFeesEarned(fees);
+        onFeesLoaded?.(launch.token, fees);
       })
       .catch(() => {
         if (!cancelled) setFeesEarned(0n);

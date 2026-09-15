@@ -103,17 +103,24 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
     // -------------------------------------------------------------------
 
     /// @notice Fair-launch track: 100% of supply goes to the bonding curve,
-    ///         zero team allocation. If msg.value > 0, the creator's first
-    ///         buy executes atomically in this same transaction — before
-    ///         the launch is even visible to anyone else — so a creator
-    ///         never has to race snipers for their own token.
+    ///         zero team allocation. creatorFeeBps_ is the creator's own
+    ///         chosen cut of every trade (e.g. 100 = 1%), capped so that,
+    ///         combined with the platform's protocolFeeBps, the total never
+    ///         exceeds MAX_TOTAL_FEE_BPS, the same 5% ceiling setFees
+    ///         enforces for the factory-wide default. If msg.value > 0, the
+    ///         creator's first buy executes atomically in this same
+    ///         transaction, before the launch is even visible to anyone
+    ///         else, so a creator never has to race snipers for their own
+    ///         token.
     function createMemeLaunch(
         string calldata name,
         string calldata symbol,
         string calldata metadataURI,
+        uint256 creatorFeeBps_,
         uint256 minTokensOut
     ) external payable whenNotPaused nonReentrant returns (address tokenAddr, address curveAddr) {
         _validateMetadata(name, symbol, metadataURI);
+        require(protocolFeeBps + creatorFeeBps_ <= MAX_TOTAL_FEE_BPS, "Parabola: fee too high");
 
         LaunchToken newToken = new LaunchToken(name, symbol, TOTAL_SUPPLY, address(this));
         BondingCurve curve = new BondingCurve(
@@ -124,7 +131,7 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
             defaultVirtualQuoteReserve,
             defaultGraduationThreshold,
             protocolFeeBps,
-            creatorFeeBps,
+            creatorFeeBps_,
             treasury,
             launchWindowSeconds,
             maxBuyPerWalletDuringWindow
@@ -142,9 +149,10 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
 
     /// @notice Builder track: up to MAX_TEAM_BPS of supply is carved out to
     ///         a linear-vesting OpenZeppelin VestingWallet owned by the
-    ///         creator; the remainder funds the public bonding curve. The
-    ///         vesting wallet only ever releases tokens on a schedule that
-    ///         was fixed at creation — nobody, including Parabola, can
+    ///         creator; the remainder funds the public bonding curve.
+    ///         creatorFeeBps_ works the same way as in createMemeLaunch.
+    ///         The vesting wallet only ever releases tokens on a schedule
+    ///         that was fixed at creation, nobody, including Parabola, can
     ///         accelerate, pause, or revoke it.
     function createBuilderLaunch(
         string calldata name,
@@ -152,6 +160,7 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
         string calldata metadataURI,
         uint256 teamBps,
         uint256 vestingDurationSeconds,
+        uint256 creatorFeeBps_,
         uint256 minTokensOut
     )
         external
@@ -163,6 +172,7 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
         _validateMetadata(name, symbol, metadataURI);
         require(teamBps <= MAX_TEAM_BPS, "Parabola: team allocation too high");
         require(vestingDurationSeconds >= MIN_VESTING_DURATION, "Parabola: vesting too short");
+        require(protocolFeeBps + creatorFeeBps_ <= MAX_TOTAL_FEE_BPS, "Parabola: fee too high");
 
         uint256 teamAmount = (TOTAL_SUPPLY * teamBps) / BPS_DENOMINATOR;
         uint256 curveAmount = TOTAL_SUPPLY - teamAmount;
@@ -187,7 +197,7 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
             defaultVirtualQuoteReserve,
             defaultGraduationThreshold,
             protocolFeeBps,
-            creatorFeeBps,
+            creatorFeeBps_,
             treasury,
             launchWindowSeconds,
             maxBuyPerWalletDuringWindow

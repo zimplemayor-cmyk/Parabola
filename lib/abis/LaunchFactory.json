@@ -483,6 +483,11 @@
       },
       {
         "internalType": "uint256",
+        "name": "creatorFeeBps_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
         "name": "minTokensOut",
         "type": "uint256"
       }
@@ -524,6 +529,11 @@
         "internalType": "string",
         "name": "metadataURI",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "creatorFeeBps_",
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
