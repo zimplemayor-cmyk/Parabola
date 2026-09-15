@@ -13,7 +13,7 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
   const { data: curveAddress, isLoading: loadingCurve } = useCurveForToken(tokenAddress);
   const { name, symbol, totalSupply } = useTokenMeta(tokenAddress);
   const { curve } = useCurveData(curveAddress);
-  const metadataURI = useMetadataURIForToken(tokenAddress);
+  const { metadataURI, creationBlock } = useMetadataURIForToken(tokenAddress);
   const { metadata, imageUrl } = useLaunchMetadata(metadataURI);
 
   if (!loadingCurve && curveAddress === "0x0000000000000000000000000000000000000000") {
@@ -62,7 +62,11 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
 
       <div className="mt-8 grid gap-8 md:grid-cols-[1fr_360px]">
         <div className="card p-6">
-          <PriceChart curveAddress={curveAddress} progress={curve ? Number(curve.progressBps) / 10_000 : 0} />
+          <PriceChart
+            curveAddress={curveAddress}
+            fromBlock={creationBlock}
+            progress={curve ? Number(curve.progressBps) / 10_000 : 0}
+          />
           <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-ink-border pt-6 text-sm sm:grid-cols-4">
             <Detail label="Total supply" value={totalSupply ? formatQuote(totalSupply, { compact: true }) : "…"} />
             <Detail

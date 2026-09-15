@@ -8,38 +8,55 @@ import { fetchTrades, tradesToCandles, autoTimeframe, TIMEFRAMES, type Trade, ty
 
 type ChartMode = "line" | "candles";
 
-export function PriceChart({ curveAddress, progress }: { curveAddress: `0x${string}` | undefined; progress: number }) {
+export function PriceChart({
+  curveAddress,
+  fromBlock,
+  progress,
+}: {
+  curveAddress: `0x${string}` | undefined;
+  fromBlock: bigint | undefined;
+  progress: number;
+}) {
   const publicClient = usePublicClient();
   const [trades, setTrades] = useState<Trade[] | null>(null);
+  const [fetchFailed, setFetchFailed] = useState(false);
   const [mode, setMode] = useState<ChartMode>("candles");
   const [timeframe, setTimeframe] = useState<TimeframeLabel | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    if (!curveAddress || !publicClient) return;
+    // fromBlock arrives slightly after curveAddress (it's a separate log
+    // lookup), so wait for both rather than firing an unbounded fetch that
+    // would hit the exact "earliest" problem this was built to avoid.
+    if (!curveAddress || !publicClient || fromBlock === undefined) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting state when curveAddress changes, before the new async fetch below
     setTrades(null);
-    fetchTrades(publicClient, curveAddress)
+    setFetchFailed(false);
+    fetchTrades(publicClient, curveAddress, fromBlock)
       .then((t) => {
         if (cancelled) return;
         setTrades(t);
         setTimeframe((prev) => prev ?? autoTimeframe(t));
       })
-      .catch(() => {
-        if (!cancelled) setTrades([]);
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Trade history fetch failed:", err);
+        setTrades([]);
+        setFetchFailed(true);
       });
     return () => {
       cancelled = true;
     };
-  }, [curveAddress, publicClient]);
+  }, [curveAddress, fromBlock, publicClient]);
 
   const candles = useMemo(
     () => (trades && trades.length > 0 && timeframe ? tradesToCandles(trades, timeframe) : []),
     [trades, timeframe]
   );
 
-  // No real trades yet (new/quiet token): fall back to the theoretical
-  // bonding-curve shape rather than an empty or fake-looking chart.
+  // No real trades yet (new/quiet token, or the fetch itself failed): fall
+  // back to the theoretical bonding-curve shape rather than an empty or
+  // fake-looking chart, but say which case it actually is.
   const hasHistory = trades !== null && trades.length >= 2;
 
   if (!hasHistory) {
@@ -49,7 +66,9 @@ export function PriceChart({ curveAddress, progress }: { curveAddress: `0x${stri
         <p className="mt-3 text-center text-xs text-paper-faint">
           {trades === null
             ? "Loading trade history…"
-            : "Showing the bonding curve's shape, real price history will appear here once trading starts."}
+            : fetchFailed
+              ? "Couldn't load trade history from the network just now. Showing the bonding curve's shape instead."
+              : "Showing the bonding curve's shape, real price history will appear here once trading starts."}
         </p>
       </div>
     );

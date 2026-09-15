@@ -25,23 +25,66 @@ export interface Candle {
  * zero) trades. Callers should handle that case explicitly rather than
  * rendering an empty/misleading chart.
  */
-export async function fetchTrades(client: PublicClient, curveAddress: `0x${string}`): Promise<Trade[]> {
+const MAX_CHUNK_BLOCKS = 5_000n;
+
+/** Fetches one event across a block range in bounded chunks, since most Arc
+ *  RPC providers reject (or silently fail on) a single "earliest to latest"
+ *  query. Halves the chunk size and retries on a range-too-large error
+ *  rather than assuming a fixed limit that may not match every provider. */
+async function getLogsChunked(
+  client: any,
+  curveAddress: `0x${string}`,
+  eventName: "Buy" | "Sell",
+  fromBlock: bigint,
+  toBlock: bigint
+): Promise<any[]> {
+  const results: any[] = [];
+  let cursor = fromBlock;
+  let chunk = MAX_CHUNK_BLOCKS;
+
+  while (cursor <= toBlock) {
+    const end = cursor + chunk > toBlock ? toBlock : cursor + chunk;
+    try {
+      const logs = await client.getLogs({
+        address: curveAddress,
+        abi: BondingCurveAbi,
+        eventName,
+        fromBlock: cursor,
+        toBlock: end,
+      });
+      results.push(...logs);
+      cursor = end + 1n;
+    } catch (err) {
+      // Provider rejected this range (block-range or response-size limit).
+      // Shrink and retry rather than giving up on the whole fetch.
+      if (chunk <= 50n) throw err; // too small to shrink further, a real error
+      chunk = chunk / 4n;
+    }
+  }
+  return results;
+}
+
+/**
+ * Reads every Buy/Sell event a curve has emitted, from its own creation
+ * block (never "earliest", which most providers reject or choke on) up to
+ * the current block, in bounded chunks, and derives an implied trade price
+ * from each (quoteIn/tokensOut for buys, quoteOut/tokensIn for sells): real
+ * executed prices, not the theoretical curve shape. This is a client-side
+ * read of contract logs; there's no backend indexer behind it, so on a
+ * brand-new or quiet token this can come back with very few (or zero)
+ * trades. Callers should handle that case explicitly rather than rendering
+ * an empty/misleading chart.
+ */
+export async function fetchTrades(
+  client: PublicClient,
+  curveAddress: `0x${string}`,
+  fromBlock: bigint = 0n
+): Promise<Trade[]> {
   const anyClient = client as any;
+  const latest = await anyClient.getBlockNumber();
   const [buyLogs, sellLogs] = await Promise.all([
-    anyClient.getLogs({
-      address: curveAddress,
-      abi: BondingCurveAbi,
-      eventName: "Buy",
-      fromBlock: "earliest",
-      toBlock: "latest",
-    }),
-    anyClient.getLogs({
-      address: curveAddress,
-      abi: BondingCurveAbi,
-      eventName: "Sell",
-      fromBlock: "earliest",
-      toBlock: "latest",
-    }),
+    getLogsChunked(anyClient, curveAddress, "Buy", fromBlock, latest),
+    getLogsChunked(anyClient, curveAddress, "Sell", fromBlock, latest),
   ]);
 
   const raw = [

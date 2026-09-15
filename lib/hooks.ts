@@ -59,6 +59,7 @@ export function useLaunchMetadata(metadataURI: string | undefined) {
 export function useMetadataURIForToken(tokenAddress: `0x${string}` | undefined) {
   const client = usePublicClient();
   const [metadataURI, setMetadataURI] = useState<string | undefined>();
+  const [creationBlock, setCreationBlock] = useState<bigint | undefined>();
 
   useEffect(() => {
     if (!tokenAddress || !client || !FACTORY_ADDRESS) return;
@@ -69,12 +70,13 @@ export function useMetadataURIForToken(tokenAddress: `0x${string}` | undefined) 
         abi: LaunchFactoryAbi,
         eventName: "LaunchCreated",
         args: { token: tokenAddress },
-        fromBlock: "earliest",
+        fromBlock: 0n,
         toBlock: "latest",
       })
       .then((logs: any[]) => {
         if (cancelled || logs.length === 0) return;
         setMetadataURI(logs[0].args.metadataURI as string);
+        setCreationBlock(logs[0].blockNumber as bigint);
       })
       .catch(() => {});
     return () => {
@@ -82,7 +84,7 @@ export function useMetadataURIForToken(tokenAddress: `0x${string}` | undefined) 
     };
   }, [tokenAddress, client]);
 
-  return metadataURI;
+  return { metadataURI, creationBlock };
 }
 
 export interface LaunchSummary {
