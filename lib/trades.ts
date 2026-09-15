@@ -19,7 +19,7 @@ export interface Candle {
 /**
  * Reads every Buy/Sell event ever emitted by a curve and derives an implied
  * trade price from each (quoteIn/tokensOut for buys, quoteOut/tokensIn for
- * sells) — real executed prices, not the theoretical curve shape. This is a
+ * sells), real executed prices, not the theoretical curve shape. This is a
  * client-side read of contract logs; there's no backend indexer behind it,
  * so on a brand-new or quiet token this can come back with very few (or
  * zero) trades. Callers should handle that case explicitly rather than
@@ -69,7 +69,7 @@ export async function fetchTrades(client: PublicClient, curveAddress: `0x${strin
     .map((t) => ({
       blockNumber: t.blockNumber,
       timestamp: timestampByBlock.get(t.blockNumber) ?? 0,
-      // 18-decimal token amount, quote is 6-decimal (USDC) — normalize to
+      // 18-decimal token amount, quote is 6-decimal (USDC), normalize to
       // quote-per-whole-token in real units.
       price: (Number(t.quote) / 1e6) / (Number(t.tokens) / 1e18),
     }))
@@ -90,7 +90,7 @@ export const TIMEFRAMES = [
 export type TimeframeLabel = (typeof TIMEFRAMES)[number]["label"];
 
 /** Picks a bucket width that keeps candle count reasonable for the trade
- *  history's actual span — used as the default timeframe on first load. */
+ *  history's actual span, used as the default timeframe on first load. */
 export function autoTimeframe(trades: Trade[]): TimeframeLabel {
   if (trades.length === 0) return "1h";
   const span = trades[trades.length - 1].timestamp - trades[0].timestamp;

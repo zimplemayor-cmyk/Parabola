@@ -7,7 +7,7 @@ const wcProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 // Injected (MetaMask, Rabby, Coinbase Wallet extension, etc.) needs zero
 // external setup and is the primary path. WalletConnect is included only
 // when a project ID is configured, so a fresh clone of this repo works
-// immediately without requiring a WalletConnect Cloud signup first — see
+// immediately without requiring a WalletConnect Cloud signup first, see
 // README.md "Environment variables" for how to add one later.
 export const wagmiConfig = createConfig({
   chains: [arcTestnet, arcMainnet],

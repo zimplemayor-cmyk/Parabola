@@ -45,7 +45,7 @@ export function ThemeToggle() {
           <path d="M21 12.6A9 9 0 1 1 11.4 3a7 7 0 0 0 9.6 9.6Z" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       ) : (
-        // Sun (offer to switch TO light) — also the safe default while theme is resolving
+        // Sun (offer to switch TO light), also the safe default while theme is resolving
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="4" />
           <path

@@ -82,8 +82,8 @@ export function LaunchForm() {
     setUploadError(null);
     let metadataURI = "";
 
-    // Uploads happen from the creator's own device — chosen via the file
-    // picker below, not a pasted link — then pinned to IPFS through our
+    // Uploads happen from the creator's own device, chosen via the file
+    // picker below, not a pasted link, then pinned to IPFS through our
     // own server route (keeps the pinning API key server-side) before the
     // on-chain launch call fires.
     if (imageFile || description) {
@@ -156,7 +156,7 @@ export function LaunchForm() {
       <p className="mb-6 text-xs text-paper-faint">
         {track === "meme"
           ? "100% of supply goes to the public curve. No team allocation, fully fair-launch."
-          : "Reserve up to 20% for your team, linear-vested over a schedule you set — locked on-chain, not just promised."}
+          : "Reserve up to 20% for your team, linear-vested over a schedule you set. Locked on-chain, not just promised."}
       </p>
 
       <div className="space-y-5">
@@ -180,7 +180,7 @@ export function LaunchForm() {
           />
         </Field>
 
-        <Field label="Token image" hint="optional" help="PNG, JPEG, GIF, or WEBP, up to 5MB. Uploaded straight from your device — no link needed.">
+        <Field label="Token image" hint="optional" help="PNG, JPEG, GIF, or WEBP, up to 5MB. Uploaded straight from your device, no link needed.">
           <input
             ref={fileInputRef}
             type="file"
@@ -261,7 +261,7 @@ export function LaunchForm() {
           </>
         )}
 
-        <Field label="Your first buy" hint="optional — executes atomically, before anyone else can buy">
+        <Field label="Your first buy" hint="optional, executes atomically, before anyone else can buy">
           <div className="relative">
             <input
               className="input-field pr-16"
@@ -277,7 +277,7 @@ export function LaunchForm() {
 
       {!FACTORY_CONFIGURED && (
         <p className="mt-6 text-xs text-ignite-soft">
-          Factory address not configured — set NEXT_PUBLIC_FACTORY_ADDRESS in .env after deploying the contracts.
+          Factory address not configured. Set NEXT_PUBLIC_FACTORY_ADDRESS in .env after deploying the contracts.
         </p>
       )}
       {uploadError && <p className="mt-6 text-xs text-ignite-soft">{uploadError}</p>}

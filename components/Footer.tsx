@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ParabolaMark } from "./ParabolaMark";
 
 /**
- * Point these at the real profiles the moment they exist — search for
+ * Point these at the real profiles the moment they exist, search for
  * "/coming-soon" in this repo, there's only this one place to change.
  */
 const SOCIAL_LINKS = [
@@ -37,7 +37,7 @@ export function Footer() {
             </div>
             <p className="mt-3 text-xs leading-relaxed text-paper-faint">
               Parabola is non-custodial software. Your wallet signs every transaction directly with the smart
-              contracts below — Parabola never holds your funds or your tokens. Nothing here is financial advice.
+              contracts below. Parabola never holds your funds or your tokens, and nothing here is financial advice.
               Tokens created on this platform are not vetted or endorsed by Parabola. Trading is irreversible and
               risky; only use funds you can afford to lose.
             </p>

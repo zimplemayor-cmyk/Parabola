@@ -8,7 +8,7 @@ import { activeChain } from "@/lib/chains";
  * to `wallet_addEthereumChain` (passing rpcUrls/blockExplorerUrls/
  * nativeCurrency straight from the chain object registered in
  * lib/wagmi.ts) when the wallet responds that it doesn't recognize the
- * chain yet — so one call here covers both "switch" and "add + switch"
+ * chain yet, so one call here covers both "switch" and "add + switch"
  * without this component needing to know which case it is.
  */
 export function SwitchNetworkButton({ className = "" }: { className?: string }) {

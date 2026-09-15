@@ -5,17 +5,17 @@ const differentiators = [
   {
     title: "USDC-denominated, start to finish",
     body:
-      "Arc's gas token is USDC itself. Every price, fee, and chart on Parabola is quoted in dollars — no separate volatile gas token to think about before you can even buy.",
+      "Arc's gas token is USDC itself. Every price, fee, and chart on Parabola is quoted in dollars, so there's no separate volatile gas token to think about before you can even buy.",
   },
   {
     title: "Nothing can rug the curve",
     body:
-      "Graduation to a DEX pool runs permissionlessly, inside the same contract, the moment a launch qualifies. There's no off-chain admin key in the loop — the exact weak point that let an attacker drain ~$2M from a well-known launchpad in 2024.",
+      "Graduation to a DEX pool runs permissionlessly, inside the same contract, the moment a launch qualifies. There's no off-chain admin key in the loop, which is the exact weak point that let an attacker drain ~$2M from a well-known launchpad in 2024.",
   },
   {
     title: "One platform, two tracks",
     body:
-      "Fair-launch a meme with 100% of supply on the curve, or ship a real project with a vested team allocation — capped on-chain at 20%, never adjustable after launch.",
+      "Fair-launch a meme with 100% of supply on the curve, or ship a real project with a vested team allocation capped on-chain at 20%, never adjustable after launch.",
   },
 ];
 
@@ -39,7 +39,7 @@ export default function HomePage() {
             </h1>
             <p className="mt-5 max-w-md text-paper-dim">
               Parabola is a USDC-native launchpad for memes and builder projects on Arc. Every launch trades on a
-              bonding curve until it earns real liquidity — then it graduates itself, permissionlessly, to a public
+              bonding curve until it earns real liquidity. Then it graduates itself, permissionlessly, to a public
               DEX pool. No presale, no admin key, no custody.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">

@@ -6,7 +6,7 @@ import { activeChain } from "./chains";
 export { LaunchFactoryAbi, BondingCurveAbi, LaunchTokenAbi };
 
 /**
- * Set after running `npm run deploy:testnet` (or :mainnet) in /contracts —
+ * Set after running `npm run deploy:testnet` (or :mainnet) in /contracts,
  * see that command's console output, or contracts/deployments/*.json.
  */
 export const FACTORY_ADDRESS = (process.env.NEXT_PUBLIC_FACTORY_ADDRESS || "") as `0x${string}`;

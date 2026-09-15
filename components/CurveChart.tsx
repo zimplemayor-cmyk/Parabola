@@ -9,7 +9,7 @@ export function CurveChart({
   height = 280,
   showMarker = true,
 }: {
-  /** 0..1 — how far along the curve the token currently is */
+  /** 0..1, how far along the curve the token currently is */
   progress: number;
   width?: number;
   height?: number;

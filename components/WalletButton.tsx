@@ -45,7 +45,7 @@ export function WalletButton() {
           <p className="label-caps">{chain?.name ?? "Unknown network"}</p>
           <SwitchNetworkButton className="mt-2" />
           <p className="mt-2 font-mono text-sm text-paper">
-            {balance ? `${formatQuote(balance.value)} USDC` : "—"}
+            {balance ? `${formatQuote(balance.value)} USDC` : "N/A"}
           </p>
           <button
             onClick={() => {

@@ -43,7 +43,7 @@ export function useLaunchMetadata(metadataURI: string | undefined) {
         setMetadata(json);
       })
       .catch(() => {
-        /* no metadata JSON at this URI, or it's unreachable — token page falls back to name/symbol only */
+        /* no metadata JSON at this URI, or it's unreachable, token page falls back to name/symbol only */
       });
     return () => {
       cancelled = true;
@@ -54,7 +54,7 @@ export function useLaunchMetadata(metadataURI: string | undefined) {
 }
 
 /** Looks up a single launch's metadataURI directly from its token address,
- *  via the indexed LaunchCreated log — used on the token detail page,
+ *  via the indexed LaunchCreated log, used on the token detail page,
  *  which doesn't have the full LaunchSummary the explore list does. */
 export function useMetadataURIForToken(tokenAddress: `0x${string}` | undefined) {
   const client = usePublicClient();

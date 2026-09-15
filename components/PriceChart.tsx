@@ -49,7 +49,7 @@ export function PriceChart({ curveAddress, progress }: { curveAddress: `0x${stri
         <p className="mt-3 text-center text-xs text-paper-faint">
           {trades === null
             ? "Loading trade history…"
-            : "Showing the bonding curve's shape — real price history will appear here once trading starts."}
+            : "Showing the bonding curve's shape, real price history will appear here once trading starts."}
         </p>
       </div>
     );

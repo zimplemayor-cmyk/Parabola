@@ -2,7 +2,7 @@ export function ParabolaMark({ className = "h-8 w-8" }: { className?: string }) 
   return (
     <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
       {/* The mark IS the product: a token launches at the dot, arcs through
-         the bonding curve, and graduates into the open ring — the same
+         the bonding curve, and graduates into the open ring, the same
          shape as the price chart on every token page. */}
       <path
         d="M6 34C6 34 14 12 24 12C34 12 42 34 42 34"

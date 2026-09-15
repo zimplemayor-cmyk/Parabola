@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const jwt = process.env.PINATA_JWT;
   if (!jwt) {
     return NextResponse.json(
-      { error: "Metadata uploads aren't configured yet — PINATA_JWT is missing on the server." },
+      { error: "Metadata uploads aren't configured yet, PINATA_JWT is missing on the server." },
       { status: 503 }
     );
   }

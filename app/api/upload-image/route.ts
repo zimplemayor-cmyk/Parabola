@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Pins a creator-uploaded image straight to IPFS via Pinata. PINATA_JWT is
- * intentionally NOT prefixed with NEXT_PUBLIC_ — it must stay server-only,
+ * intentionally NOT prefixed with NEXT_PUBLIC_, it must stay server-only,
  * this route is what keeps it off the client. Requires a free Pinata
  * account: pinata.cloud → API Keys → New Key → Admin → copy the JWT → set
  * it as PINATA_JWT in Vercel Project Settings → Environment Variables
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const jwt = process.env.PINATA_JWT;
   if (!jwt) {
     return NextResponse.json(
-      { error: "Image uploads aren't configured yet — PINATA_JWT is missing on the server." },
+      { error: "Image uploads aren't configured yet, PINATA_JWT is missing on the server." },
       { status: 503 }
     );
   }

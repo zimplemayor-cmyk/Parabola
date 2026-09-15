@@ -61,7 +61,7 @@ export function TradePanel({
 
   // Clearing the amount field on success is local component state, so it's
   // safe to adjust directly during render (React's documented pattern for
-  // "reset state when a condition changes" — see
+  // "reset state when a condition changes", see
   // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes).
   // React bails out once amount is already "", so this doesn't loop.
   if (isSuccess && amount !== "") {
@@ -69,7 +69,7 @@ export function TradePanel({
   }
 
   // Resetting wagmi's own mutation state is a call into an external system,
-  // not local state — that one genuinely belongs in an effect.
+  // not local state, that one genuinely belongs in an effect.
   useEffect(() => {
     if (isSuccess) reset();
   }, [isSuccess, reset]);
@@ -78,7 +78,7 @@ export function TradePanel({
     return (
       <div className="card p-6 text-center">
         <p className="text-stable">This token graduated to a public DEX pool.</p>
-        <p className="mt-1 text-sm text-paper-dim">Trade it there — the curve here is permanently closed.</p>
+        <p className="mt-1 text-sm text-paper-dim">Trade it there. The curve here is permanently closed.</p>
       </div>
     );
   }
@@ -158,10 +158,10 @@ export function TradePanel({
           {side === "buy"
             ? usdcBalance
               ? `${formatQuote(usdcBalance.value)} USDC`
-              : "—"
+              : "N/A"
             : tokenBalance !== undefined
               ? `${formatToken(tokenBalance as bigint, { compact: true })} ${symbol}`
-              : "—"}
+              : "N/A"}
         </span>
         {quote !== undefined && parsedAmount ? (
           <span>

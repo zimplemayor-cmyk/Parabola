@@ -1,6 +1,6 @@
 import { formatUnits, parseUnits } from "viem";
 
-/** Arc's native currency (USDC) uses 6 decimals — see lib/chains.ts. */
+/** Arc's native currency (USDC) uses 6 decimals, see lib/chains.ts. */
 export const QUOTE_DECIMALS = 6;
 /** Every LaunchToken is a standard 18-decimal ERC20. */
 export const TOKEN_DECIMALS = 18;

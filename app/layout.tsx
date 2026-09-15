@@ -7,7 +7,7 @@ import { TestnetBanner } from "@/components/TestnetBanner";
 import { SplashIntro } from "@/components/SplashIntro";
 
 export const metadata: Metadata = {
-  title: "Parabola — launch tokens on Arc",
+  title: "Parabola: launch tokens on Arc",
   description:
     "Launch meme and builder tokens on Arc with USDC-denominated bonding curves that graduate permissionlessly to a public DEX pool. No admin can touch a live launch's funds.",
 };

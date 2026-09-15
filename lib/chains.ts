@@ -5,7 +5,7 @@ import { defineChain } from "viem";
 //
 // Testnet values are cross-checked against Circle's own arc-node GitHub
 // repo, docs.arc.network, and multiple independent RPC providers (Alchemy,
-// GetBlock, dRPC) as of September 2026 — consistent across all of them.
+// GetBlock, dRPC) as of September 2026, consistent across all of them.
 //
 // Mainnet launches September 16, 2026. Chain ID 5042 is the most consistent
 // figure available before launch (it's the testnet ID's obvious parent:
@@ -15,12 +15,12 @@ import { defineChain } from "viem";
 // NEXT_PUBLIC_ARC_MAINNET_* env vars) before pointing real users at it.
 //
 // Native currency: Arc's gas token is USDC itself, at USDC's real-world
-// convention of 6 decimals — NOT the 18 decimals almost every EVM chain's
+// convention of 6 decimals, NOT the 18 decimals almost every EVM chain's
 // native currency uses. Getting this wrong is the single most common
 // mistake integrating with Arc (confirmed independently by GetBlock's own
 // integration docs) and silently breaks every balance/price display by a
 // factor of 10^12 if missed. Double-check this against docs.arc.network
-// before mainnet — see SECURITY.md, "Before mainnet with real funds".
+// before mainnet, see SECURITY.md, "Before mainnet with real funds".
 // ---------------------------------------------------------------------------
 
 export const ARC_NATIVE_CURRENCY = {

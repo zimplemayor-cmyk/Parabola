@@ -2,7 +2,7 @@
  * Mirrors BondingCurve.sol's constant-product formula in plain JS numbers,
  * purely to draw the curve shape (hero animation, token detail chart).
  *
- * This is NOT used for anything a transaction depends on — every actual
+ * This is NOT used for anything a transaction depends on, every actual
  * trade quote in this app comes from the contract's own quoteBuy()/
  * quoteSell() view functions (see components/TradePanel.tsx), so a
  * floating-point rounding difference here can never cause a user to see a
@@ -18,7 +18,7 @@ export interface CurvePoint {
 export function buildCurveShape(steps = 60): CurvePoint[] {
   const points: CurvePoint[] = [];
   // Same shape regardless of the absolute virtualQuoteReserve/curveSupply
-  // chosen for a real launch — normalize x0=y0=1 and sample tokensSoldFrac
+  // chosen for a real launch, normalize x0=y0=1 and sample tokensSoldFrac
   // from 0 to ~0.97 (a real curve never reaches exactly 100% sold, since
   // price → infinity as remaining supply → 0).
   const x0 = 1;
@@ -41,7 +41,7 @@ export function pointsToPath(points: CurvePoint[], width: number, height: number
   const range = maxPrice - minPrice || 1;
   const toXY = (p: CurvePoint) => {
     const x = padding + p.progress * (width - padding * 2);
-    // sqrt-compress the price axis — the raw curve is extremely convex near
+    // sqrt-compress the price axis, the raw curve is extremely convex near
     // the graduation end, and a linear axis makes the first 80% of the
     // chart look like a flat line. This is a display choice only.
     const norm = Math.sqrt((p.price - minPrice) / range);
