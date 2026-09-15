@@ -133,3 +133,31 @@ export function tradesToCandles(trades: Trade[], timeframe: TimeframeLabel): Can
       };
     });
 }
+
+/**
+ * Sums a curve creator's actual fee earnings from its Buy/Sell history.
+ * Both events carry a combined `fee` (protocol + creator together); this
+ * splits each one by the live creatorFeeBps/protocolFeeBps ratio, which is
+ * exact since the contract computes both cuts from the same bps split on
+ * every trade. Fees land in the creator's wallet automatically on every
+ * trade (see BondingCurve.sol's _send calls), so this is a historical
+ * total already sitting in their wallet, not a claimable/pending balance.
+ */
+export async function fetchCreatorFeesEarned(
+  client: PublicClient,
+  curveAddress: `0x${string}`,
+  fromBlock: bigint,
+  creatorFeeBps: bigint,
+  protocolFeeBps: bigint
+): Promise<bigint> {
+  const anyClient = client as any;
+  const latest: bigint = await anyClient.getBlockNumber();
+  const [buyLogs, sellLogs] = await Promise.all([
+    getLogsChunked(anyClient, { address: curveAddress, abi: BondingCurveAbi, eventName: "Buy" }, fromBlock, latest),
+    getLogsChunked(anyClient, { address: curveAddress, abi: BondingCurveAbi, eventName: "Sell" }, fromBlock, latest),
+  ]);
+  const totalBps = creatorFeeBps + protocolFeeBps;
+  if (totalBps === 0n) return 0n;
+  const totalFee = [...buyLogs, ...sellLogs].reduce((sum: bigint, l: any) => sum + (l.args.fee as bigint), 0n);
+  return (totalFee * creatorFeeBps) / totalBps;
+}

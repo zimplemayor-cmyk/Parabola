@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useAccount, useConnect, useDisconnect, useBalance } from "wagmi";
 import { useState, useRef, useEffect } from "react";
 import { formatAddress, formatNativeBalance } from "@/lib/format";
@@ -47,12 +48,19 @@ export function WalletButton() {
           <p className="mt-2 font-mono text-sm text-paper">
             {balance ? `${formatNativeBalance(balance.value)} USDC` : "N/A"}
           </p>
+          <Link
+            href="/profile"
+            onClick={() => setOpen(false)}
+            className="mt-3 block w-full rounded-lg border border-ink-border py-2 text-center text-sm text-paper-dim transition hover:border-stable/50 hover:text-stable"
+          >
+            View profile
+          </Link>
           <button
             onClick={() => {
               disconnect();
               setOpen(false);
             }}
-            className="mt-3 w-full rounded-lg border border-ink-border py-2 text-sm text-paper-dim transition hover:border-ignite/50 hover:text-ignite"
+            className="mt-2 w-full rounded-lg border border-ink-border py-2 text-sm text-paper-dim transition hover:border-ignite/50 hover:text-ignite"
           >
             Disconnect
           </button>

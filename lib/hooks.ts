@@ -138,6 +138,8 @@ export interface CurveData {
   currentPrice: bigint;
   progressBps: bigint;
   creator: `0x${string}`;
+  creatorFeeBps: bigint;
+  protocolFeeBps: bigint;
 }
 
 /** Batches every view call for one curve into a single multicall. */
@@ -155,6 +157,8 @@ export function useCurveData(curveAddress: `0x${string}` | undefined) {
           { ...contract, functionName: "getCurrentPrice" },
           { ...contract, functionName: "progressBps" },
           { ...contract, functionName: "creator" },
+          { ...contract, functionName: "creatorFeeBps" },
+          { ...contract, functionName: "protocolFeeBps" },
         ]
       : [],
     query: { enabled: !!curveAddress, refetchInterval: 12_000 },
@@ -172,6 +176,8 @@ export function useCurveData(curveAddress: `0x${string}` | undefined) {
           currentPrice: data[6]!.result as bigint,
           progressBps: data[7]!.result as bigint,
           creator: data[8]!.result as `0x${string}`,
+          creatorFeeBps: data[9]!.result as bigint,
+          protocolFeeBps: data[10]!.result as bigint,
         }
       : undefined;
 
@@ -197,4 +203,23 @@ export function useTokenMeta(tokenAddress: `0x${string}` | undefined) {
     totalSupply: data?.[2]?.result as bigint | undefined,
     ...rest,
   };
+}
+
+const PROFILE_LAUNCH_SCAN_CAP = 500;
+
+/**
+ * Finds every launch created by a given wallet. Uses the existing paginated
+ * getLaunches contract read (not a log scan), so it works the same way the
+ * Explore page already does. Capped at the most recent
+ * PROFILE_LAUNCH_SCAN_CAP launches platform-wide for now; fine at today's
+ * scale, but if Parabola ever has thousands of launches this should move
+ * to an indexed lookup instead of scanning the whole list client-side.
+ */
+export function useCreatorLaunches(creator: `0x${string}` | undefined) {
+  const { data: total } = useTotalLaunches();
+  const count = total ? Number(total) : 0;
+  const offset = Math.max(0, count - PROFILE_LAUNCH_SCAN_CAP);
+  const { data: launches, isLoading } = useLaunches(offset, count - offset);
+  const mine = (launches ?? []).filter((l) => creator && l.creator.toLowerCase() === creator.toLowerCase());
+  return { launches: mine, isLoading: isLoading || total === undefined, truncated: offset > 0 };
 }
