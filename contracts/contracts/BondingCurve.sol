@@ -51,6 +51,14 @@ contract BondingCurve is ReentrancyGuard {
     uint256 public immutable graduationThreshold;
     uint256 public immutable protocolFeeBps;
     uint256 public immutable creatorFeeBps;
+
+    /// @notice Creator's cut accrues here on every trade instead of being
+    ///         pushed immediately, claimed on the creator's own schedule
+    ///         via claimCreatorFees(). Protocol fees still go straight to
+    ///         treasury on every trade, unchanged.
+    uint256 public pendingCreatorFees;
+
+    event CreatorFeesClaimed(address indexed creator, uint256 amount);
     address public immutable treasury;
     uint256 public immutable launchWindowEnd;
     uint256 public immutable maxBuyPerWalletDuringWindow;
@@ -149,7 +157,7 @@ contract BondingCurve is ReentrancyGuard {
 
         IERC20(token).safeTransfer(recipient, tokensOut);
         _send(treasury, protocolCut);
-        _send(creator, creatorCut);
+        pendingCreatorFees += creatorCut;
 
         if (!graduated && realQuoteReserve >= graduationThreshold) {
             graduated = true;
@@ -190,7 +198,7 @@ contract BondingCurve is ReentrancyGuard {
         IERC20(token).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
         _send(recipient, netOut);
         _send(treasury, protocolCut);
-        _send(creator, creatorCut);
+        pendingCreatorFees += creatorCut;
     }
 
     // -------------------------------------------------------------------
@@ -263,6 +271,19 @@ contract BondingCurve is ReentrancyGuard {
         if (amount == 0) return;
         (bool ok, ) = to.call{value: amount}("");
         require(ok, "Parabola: transfer failed");
+    }
+
+    /// @notice Sends the creator every fee they've accrued so far, on
+    ///         their own schedule. Callable by anyone, but always pays out
+    ///         to the fixed creator address, never the caller, so there's
+    ///         no incentive or risk in someone else triggering it on the
+    ///         creator's behalf (e.g. a bot that sweeps small balances).
+    function claimCreatorFees() external nonReentrant {
+        uint256 amount = pendingCreatorFees;
+        require(amount > 0, "Parabola: nothing to claim");
+        pendingCreatorFees = 0; // effects before interactions
+        emit CreatorFeesClaimed(creator, amount);
+        _send(creator, amount);
     }
 
     // -------------------------------------------------------------------

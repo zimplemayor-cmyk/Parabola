@@ -5,7 +5,26 @@ import { formatUnits, parseUnits } from "viem";
  *  threshold, etc.) and every buy/sell msg.value are scaled to, so it's
  *  correct for every quote amount that flows through Parabola's own
  *  contracts. */
-export const QUOTE_DECIMALS = 6;
+/**
+ * Arc's native currency (USDC) is 18 decimals at the raw on-chain level
+ * (see lib/chains.ts), but that's not automatically what this app's
+ * contracts treat quote amounts as: LaunchFactory.sol/BondingCurve.sol
+ * bake their own internal constants (virtualQuoteReserve, graduation
+ * threshold, etc.) in at deploy time, and different deployed factories can
+ * be running different contract source, and therefore different
+ * decimal conventions, forever, since deployed bytecode never changes.
+ *
+ * The factory currently at NEXT_PUBLIC_FACTORY_ADDRESS on testnet was
+ * deployed before the contracts were rescaled to match Arc's real
+ * 18-decimal native accounting, so it still expects 6-decimal quote
+ * amounts. Any future redeploy from the current contract source (testnet
+ * or mainnet) expects 18. Set NEXT_PUBLIC_QUOTE_DECIMALS=18 alongside the
+ * new NEXT_PUBLIC_FACTORY_ADDRESS whenever you redeploy from current
+ * source, don't assume it from which network you're on.
+ */
+export const QUOTE_DECIMALS = process.env.NEXT_PUBLIC_QUOTE_DECIMALS
+  ? Number(process.env.NEXT_PUBLIC_QUOTE_DECIMALS)
+  : 6;
 /** Every LaunchToken is a standard 18-decimal ERC20. */
 export const TOKEN_DECIMALS = 18;
 

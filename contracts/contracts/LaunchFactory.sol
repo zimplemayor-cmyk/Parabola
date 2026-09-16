@@ -26,10 +26,10 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
     uint256 public constant MAX_TEAM_BPS = 2_000; // 20% hard ceiling — NOT owner-adjustable, ever
     uint256 public constant MIN_VESTING_DURATION = 90 days;
     uint256 public constant MAX_LAUNCH_WINDOW = 1 days;
-    uint256 public constant MIN_VIRTUAL_QUOTE_RESERVE = 100e6; // 100 USDC-equivalent
-    uint256 public constant MAX_VIRTUAL_QUOTE_RESERVE = 1_000_000e6;
-    uint256 public constant MIN_GRADUATION_THRESHOLD = 1_000e6; // 1,000 USDC-equivalent
-    uint256 public constant MAX_GRADUATION_THRESHOLD = 10_000_000e6;
+    uint256 public constant MIN_VIRTUAL_QUOTE_RESERVE = 100e18; // 100 USDC-equivalent, 18-decimal native accounting
+    uint256 public constant MAX_VIRTUAL_QUOTE_RESERVE = 1_000_000e18;
+    uint256 public constant MIN_GRADUATION_THRESHOLD = 1_000e18; // 1,000 USDC-equivalent
+    uint256 public constant MAX_GRADUATION_THRESHOLD = 10_000_000e18;
     uint256 public constant MAX_NAME_LEN = 32;
     uint256 public constant MAX_SYMBOL_LEN = 12;
     uint256 public constant MAX_METADATA_URI_LEN = 256;
@@ -92,10 +92,10 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
         treasury = treasury_;
         protocolFeeBps = 100; // 1%
         creatorFeeBps = 50; // 0.5%
-        defaultVirtualQuoteReserve = 3_000e6; // 3,000 USDC-equivalent virtual depth
-        defaultGraduationThreshold = 30_000e6; // 30,000 USDC-equivalent raised
+        defaultVirtualQuoteReserve = 3_000e18; // 3,000 USDC-equivalent virtual depth, 18-decimal native accounting
+        defaultGraduationThreshold = 30_000e18; // 30,000 USDC-equivalent raised
         launchWindowSeconds = 600; // 10 minutes
-        maxBuyPerWalletDuringWindow = 500e6; // 500 USDC-equivalent per wallet during the window
+        maxBuyPerWalletDuringWindow = 500e18; // 500 USDC-equivalent per wallet during the window
     }
 
     // -------------------------------------------------------------------

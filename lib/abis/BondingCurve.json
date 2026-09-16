@@ -600,5 +600,44 @@
   {
     "stateMutability": "payable",
     "type": "receive"
+  },
+  {
+    "type": "function",
+    "name": "pendingCreatorFees",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "claimCreatorFees",
+    "stateMutability": "nonpayable",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "event",
+    "name": "CreatorFeesClaimed",
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "creator",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ]
   }
 ]

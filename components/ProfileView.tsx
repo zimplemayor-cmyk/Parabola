@@ -51,7 +51,7 @@ export function ProfileView({ address, isOwnProfile }: { address: `0x${string}`;
         <StatCard label="Wallet balance" value={balance ? `${formatNativeBalance(balance.value, { compact: true })} USDC` : "…"} />
         <StatCard label="Launched" value={isLoading ? "…" : String(launches.length)} />
         <StatCard
-          label="Fees earned"
+          label="Claimable now"
           value={launches.length === 0 ? "$0" : feesKnownForAll ? `${formatQuote(totalFees)} USDC` : "…"}
         />
       </div>

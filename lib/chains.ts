@@ -14,19 +14,21 @@ import { defineChain } from "viem";
 // is live and update ARC_MAINNET_CHAIN_ID / the RPC URL below (or via
 // NEXT_PUBLIC_ARC_MAINNET_* env vars) before pointing real users at it.
 //
-// Native currency: Arc's gas token is USDC itself, at USDC's real-world
-// convention of 6 decimals, NOT the 18 decimals almost every EVM chain's
-// native currency uses. Getting this wrong is the single most common
-// mistake integrating with Arc (confirmed independently by GetBlock's own
-// integration docs) and silently breaks every balance/price display by a
-// factor of 10^12 if missed. Double-check this against docs.arc.network
-// before mainnet, see SECURITY.md, "Before mainnet with real funds".
-// ---------------------------------------------------------------------------
+// Native currency: Arc's gas token is USDC itself, but its actual raw
+// on-chain accounting is 18 decimals (the standard EVM "wei" convention),
+// confirmed directly in Arc's own mainnet launch coverage on 2026-09-16 —
+// NOT 6 decimals like the separate ERC-20 USDC contract at
+// 0x3600...0000. Getting this wrong is the single most common mistake
+// integrating with Arc and silently breaks every balance/price display (or
+// worse, every amount actually transferred) by a factor of 10^12 if
+// missed. This app's own contracts (LaunchFactory/BondingCurve) and
+// lib/format.ts's QUOTE_DECIMALS are rescaled to match, see
+// MAINNET_QUOTE_DECIMALS below and SECURITY.md.
 
 export const ARC_NATIVE_CURRENCY = {
   name: "USDC",
   symbol: "USDC",
-  decimals: 6,
+  decimals: 18,
 } as const;
 
 export const arcTestnet = defineChain({
