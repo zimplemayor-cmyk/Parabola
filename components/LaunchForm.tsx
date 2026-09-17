@@ -45,6 +45,7 @@ export function LaunchForm() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const [uploadStage, setUploadStage] = useState<UploadStage>("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -330,23 +331,126 @@ export function LaunchForm() {
       {error && <p className="mt-6 text-xs text-ignite-soft">{error.message.slice(0, 200)}</p>}
 
       <button
-        onClick={submit}
+        onClick={() => setShowPreview(true)}
         disabled={!canSubmit || !FACTORY_CONFIGURED || isPending || isConfirming}
         className="btn-primary mt-8 w-full disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {!isConnected
-          ? "Connect wallet to launch"
-          : uploadStage === "image"
-            ? "Uploading image…"
-            : uploadStage === "metadata"
-              ? "Pinning metadata…"
-              : isPending
-                ? "Confirm in wallet…"
-                : isConfirming
-                  ? "Launching…"
-                  : `Launch on Parabola`}
+        {!isConnected ? "Connect wallet to launch" : "Preview & launch"}
       </button>
       <p className="mt-3 text-center text-xs text-paper-faint">Chain ID {chainId} · {address ?? "not connected"}</p>
+
+      {showPreview && (
+        <LaunchPreviewModal
+          name={name}
+          symbol={symbol}
+          description={description}
+          imagePreview={imagePreview}
+          launchFee={launchFee}
+          initialBuy={initialBuy}
+          creatorFeeBps={creatorFeeBps}
+          uploadStage={uploadStage}
+          isPending={isPending}
+          isConfirming={isConfirming}
+          error={error}
+          uploadError={uploadError}
+          onCancel={() => setShowPreview(false)}
+          onConfirm={submit}
+        />
+      )}
+    </div>
+  );
+}
+
+function LaunchPreviewModal({
+  name,
+  symbol,
+  description,
+  imagePreview,
+  launchFee,
+  initialBuy,
+  creatorFeeBps,
+  uploadStage,
+  isPending,
+  isConfirming,
+  error,
+  uploadError,
+  onCancel,
+  onConfirm,
+}: {
+  name: string;
+  symbol: string;
+  description: string;
+  imagePreview: string | null;
+  launchFee: bigint | undefined;
+  initialBuy: string;
+  creatorFeeBps: number;
+  uploadStage: UploadStage;
+  isPending: boolean;
+  isConfirming: boolean;
+  error: Error | null;
+  uploadError: string | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const busy = uploadStage === "image" || uploadStage === "metadata" || isPending || isConfirming;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 p-4" onClick={onCancel}>
+      <div className="card w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+        <p className="label-caps text-center">This is what your token page will look like</p>
+
+        <div className="mt-4 flex items-center gap-3 rounded-2xl border border-ink-border p-4">
+          {imagePreview ? (
+            <img src={imagePreview} alt="" className="h-14 w-14 shrink-0 rounded-2xl object-cover" />
+          ) : (
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-ink-surface text-lg font-semibold text-paper-faint">
+              {(symbol || name || "?").slice(0, 1)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="label-caps">${symbol || "…"}</p>
+            <p className="truncate font-display text-lg font-semibold text-paper">{name || "Untitled"}</p>
+          </div>
+        </div>
+        {description && <p className="mt-3 text-sm text-paper-dim">{description}</p>}
+
+        <dl className="mt-4 space-y-1.5 text-xs">
+          <div className="flex justify-between">
+            <dt className="text-paper-faint">Your fee cut</dt>
+            <dd className="text-paper">{(creatorFeeBps / 100).toFixed(1)}% per trade</dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-paper-faint">Launch fee</dt>
+            <dd className="text-paper">{launchFee !== undefined ? `${formatQuote(launchFee)} USDC` : "…"}</dd>
+          </div>
+          {initialBuy && (
+            <div className="flex justify-between">
+              <dt className="text-paper-faint">Your first buy</dt>
+              <dd className="text-paper">{initialBuy} USDC</dd>
+            </div>
+          )}
+        </dl>
+
+        {(error || uploadError) && (
+          <p className="mt-3 text-xs text-ignite-soft">{uploadError || error?.message.slice(0, 160)}</p>
+        )}
+
+        <div className="mt-5 flex gap-3">
+          <button onClick={onCancel} disabled={busy} className="btn-secondary flex-1 disabled:opacity-50">
+            Back to edit
+          </button>
+          <button onClick={onConfirm} disabled={busy} className="btn-primary flex-1 disabled:opacity-50">
+            {uploadStage === "image"
+              ? "Uploading…"
+              : uploadStage === "metadata"
+                ? "Pinning…"
+                : isPending
+                  ? "Confirm in wallet…"
+                  : isConfirming
+                    ? "Launching…"
+                    : "Confirm & sign"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
