@@ -915,5 +915,18 @@
     ],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "type": "function",
+    "name": "LAUNCH_FEE",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ]
   }
 ]

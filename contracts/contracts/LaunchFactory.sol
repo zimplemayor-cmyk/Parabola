@@ -23,6 +23,13 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 ether; // 1B tokens, 18 decimals, every launch
     uint256 public constant BPS_DENOMINATOR = 10_000;
     uint256 public constant MAX_TOTAL_FEE_BPS = 500; // 5% hard ceiling (mirrors BondingCurve's own check)
+
+    /// @notice Flat fee charged at launch creation, separate from and in
+    ///         addition to any first-buy amount, paid straight to
+    ///         treasury in the same transaction. $0.70 USDC-equivalent,
+    ///         18-decimal native accounting (see lib/format.ts on the
+    ///         frontend for why this scale, not 6).
+    uint256 public constant LAUNCH_FEE = 7e17; // 0.7 * 1e18
     uint256 public constant MAX_TEAM_BPS = 2_000; // 20% hard ceiling — NOT owner-adjustable, ever
     uint256 public constant MIN_VESTING_DURATION = 90 days;
     uint256 public constant MAX_LAUNCH_WINDOW = 1 days;
@@ -121,6 +128,9 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
     ) external payable whenNotPaused nonReentrant returns (address tokenAddr, address curveAddr) {
         _validateMetadata(name, symbol, metadataURI);
         require(protocolFeeBps + creatorFeeBps_ <= MAX_TOTAL_FEE_BPS, "Parabola: fee too high");
+        require(msg.value >= LAUNCH_FEE, "Parabola: launch fee required");
+        _send(treasury, LAUNCH_FEE);
+        uint256 buyAmount = msg.value - LAUNCH_FEE;
 
         LaunchToken newToken = new LaunchToken(name, symbol, TOTAL_SUPPLY, address(this));
         BondingCurve curve = new BondingCurve(
@@ -142,8 +152,8 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
         curveAddr = address(curve);
         _registerLaunch(tokenAddr, curveAddr, msg.sender, address(0), false, metadataURI);
 
-        if (msg.value > 0) {
-            curve.buy{value: msg.value}(msg.sender, minTokensOut);
+        if (buyAmount > 0) {
+            curve.buy{value: buyAmount}(msg.sender, minTokensOut);
         }
     }
 
@@ -173,6 +183,9 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
         require(teamBps <= MAX_TEAM_BPS, "Parabola: team allocation too high");
         require(vestingDurationSeconds >= MIN_VESTING_DURATION, "Parabola: vesting too short");
         require(protocolFeeBps + creatorFeeBps_ <= MAX_TOTAL_FEE_BPS, "Parabola: fee too high");
+        require(msg.value >= LAUNCH_FEE, "Parabola: launch fee required");
+        _send(treasury, LAUNCH_FEE);
+        uint256 buyAmount = msg.value - LAUNCH_FEE;
 
         uint256 teamAmount = (TOTAL_SUPPLY * teamBps) / BPS_DENOMINATOR;
         uint256 curveAmount = TOTAL_SUPPLY - teamAmount;
@@ -208,8 +221,8 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
         curveAddr = address(curve);
         _registerLaunch(tokenAddr, curveAddr, msg.sender, vestingAddr, true, metadataURI);
 
-        if (msg.value > 0) {
-            curve.buy{value: msg.value}(msg.sender, minTokensOut);
+        if (buyAmount > 0) {
+            curve.buy{value: buyAmount}(msg.sender, minTokensOut);
         }
     }
 
@@ -220,6 +233,12 @@ contract LaunchFactory is Ownable2Step, ReentrancyGuard {
         require(bytes(name).length > 0 && bytes(name).length <= MAX_NAME_LEN, "Parabola: bad name length");
         require(bytes(symbol).length > 0 && bytes(symbol).length <= MAX_SYMBOL_LEN, "Parabola: bad symbol length");
         require(bytes(metadataURI).length <= MAX_METADATA_URI_LEN, "Parabola: metadata URI too long");
+    }
+
+    function _send(address to, uint256 amount) internal {
+        if (amount == 0) return;
+        (bool ok, ) = to.call{value: amount}("");
+        require(ok, "Parabola: transfer failed");
     }
 
     function _registerLaunch(

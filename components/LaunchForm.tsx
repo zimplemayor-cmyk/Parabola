@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useMemo, useRef } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useChainId, useReadContract } from "wagmi";
 import { parseEventLogs } from "viem";
 import { FACTORY_ADDRESS, LaunchFactoryAbi, FACTORY_CONFIGURED } from "@/lib/contracts";
-import { parseQuote } from "@/lib/format";
+import { parseQuote, formatQuote } from "@/lib/format";
 import { uploadImage, uploadMetadata } from "@/lib/upload";
 
 const MAX_NAME = 32;
 const MAX_SYMBOL = 12;
 const MAX_DESCRIPTION = 280;
+const MAX_TOTAL_FEE_BPS = 500; // mirrors the same constant in LaunchFactory.sol
+const CREATOR_FEE_PRESETS_BPS = [0, 50, 100, 150, 200, 300, 400]; // 0%, 0.5%, 1%, 1.5%, 2%, 3%, 4%
 const VESTING_OPTIONS = [
   { label: "90 days (minimum)", seconds: 90 * 86400 },
   { label: "180 days", seconds: 180 * 86400 },
@@ -22,7 +24,21 @@ type UploadStage = "idle" | "image" | "metadata" | "error";
 export function LaunchForm() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
+  const { data: protocolFeeBps } = useReadContract({
+    address: FACTORY_ADDRESS,
+    abi: LaunchFactoryAbi,
+    functionName: "protocolFeeBps",
+    query: { enabled: !!FACTORY_ADDRESS },
+  }) as { data: bigint | undefined };
+  const { data: launchFee } = useReadContract({
+    address: FACTORY_ADDRESS,
+    abi: LaunchFactoryAbi,
+    functionName: "LAUNCH_FEE",
+    query: { enabled: !!FACTORY_ADDRESS },
+  }) as { data: bigint | undefined };
+  const maxCreatorFeeBps = protocolFeeBps !== undefined ? MAX_TOTAL_FEE_BPS - Number(protocolFeeBps) : 400;
   const [track, setTrack] = useState<"meme" | "builder">("meme");
+  const [creatorFeeBps, setCreatorFeeBps] = useState(100); // defaults to 1%
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [description, setDescription] = useState("");
@@ -103,13 +119,13 @@ export function LaunchForm() {
       }
     }
 
-    const value = initialBuy ? parseQuote(initialBuy) : 0n;
+    const value = (launchFee ?? 0n) + (initialBuy ? parseQuote(initialBuy) : 0n);
     if (track === "meme") {
       writeContract({
         address: FACTORY_ADDRESS,
         abi: LaunchFactoryAbi,
         functionName: "createMemeLaunch",
-        args: [name, symbol, metadataURI, 0n],
+        args: [name, symbol, metadataURI, BigInt(creatorFeeBps), 0n],
         value,
       });
     } else {
@@ -117,7 +133,7 @@ export function LaunchForm() {
         address: FACTORY_ADDRESS,
         abi: LaunchFactoryAbi,
         functionName: "createBuilderLaunch",
-        args: [name, symbol, metadataURI, BigInt(teamPct * 100), BigInt(vestingSeconds), 0n],
+        args: [name, symbol, metadataURI, BigInt(teamPct * 100), BigInt(vestingSeconds), BigInt(creatorFeeBps), 0n],
         value,
       });
     }
@@ -261,6 +277,29 @@ export function LaunchForm() {
           </>
         )}
 
+        <Field
+          label="Your fee cut"
+          hint={`${(creatorFeeBps / 100).toFixed(1)}% per trade`}
+          help="Your share of every buy and sell, accrued on-chain and claimable anytime from your profile page. The platform takes its own small cut, sent straight to treasury on every trade; the two combined can't exceed 5%."
+        >
+          <div className="flex flex-wrap gap-2">
+            {CREATOR_FEE_PRESETS_BPS.filter((bps) => bps <= maxCreatorFeeBps).map((bps) => (
+              <button
+                type="button"
+                key={bps}
+                onClick={() => setCreatorFeeBps(bps)}
+                className={`rounded-full border px-3.5 py-1.5 text-sm transition ${
+                  creatorFeeBps === bps
+                    ? "border-ignite bg-ignite/10 text-ignite"
+                    : "border-ink-border text-paper-dim hover:border-ignite/40"
+                }`}
+              >
+                {bps === 0 ? "0%" : `${(bps / 100).toFixed(1)}%`}
+              </button>
+            ))}
+          </div>
+        </Field>
+
         <Field label="Your first buy" hint="optional, executes atomically, before anyone else can buy">
           <div className="relative">
             <input
@@ -274,6 +313,13 @@ export function LaunchForm() {
           </div>
         </Field>
       </div>
+
+      {launchFee !== undefined && (
+        <p className="mt-6 text-center text-xs text-paper-faint">
+          Launching costs a flat {formatQuote(launchFee)} USDC platform fee (to Parabola&apos;s treasury), plus your
+          first buy above if you set one, plus gas. You&apos;ll sign one transaction for all of it.
+        </p>
+      )}
 
       {!FACTORY_CONFIGURED && (
         <p className="mt-6 text-xs text-ignite-soft">
