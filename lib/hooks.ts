@@ -223,3 +223,44 @@ export function useCreatorLaunches(creator: `0x${string}` | undefined) {
   const mine = (launches ?? []).filter((l) => creator && l.creator.toLowerCase() === creator.toLowerCase());
   return { launches: mine, isLoading: isLoading || total === undefined, truncated: offset > 0 };
 }
+
+const EXPLORE_SCAN_CAP = 300;
+
+export interface ExploreLaunch extends LaunchSummary {
+  realQuoteReserve: bigint;
+  graduated: boolean;
+  progressBps: bigint;
+}
+
+/**
+ * Fetches recent launches (capped, same bounded-scan approach as the
+ * profile page) plus each one's raised amount in a single batched
+ * multicall, rather than the per-card fetch every TokenCard already does
+ * independently. Needed because sorting by "most raised" has to happen
+ * before rendering, not per-card after the fact.
+ */
+export function useExploreLaunches() {
+  const { data: total } = useTotalLaunches();
+  const count = total ? Number(total) : 0;
+  const offset = Math.max(0, count - EXPLORE_SCAN_CAP);
+  const { data: launches, isLoading: loadingLaunches } = useLaunches(offset, count - offset);
+
+  const curveContracts = (launches ?? []).map((l) => ({ address: l.curve, abi: BondingCurveAbi }) as const);
+  const { data: curveResults, isLoading: loadingCurves } = useReadContracts({
+    contracts: curveContracts.flatMap((c) => [
+      { ...c, functionName: "realQuoteReserve" },
+      { ...c, functionName: "graduated" },
+      { ...c, functionName: "progressBps" },
+    ]) as any,
+    query: { enabled: (launches?.length ?? 0) > 0 },
+  });
+
+  const enriched: ExploreLaunch[] = (launches ?? []).map((l, i) => ({
+    ...l,
+    realQuoteReserve: (curveResults?.[i * 3]?.result as bigint) ?? 0n,
+    graduated: (curveResults?.[i * 3 + 1]?.result as boolean) ?? false,
+    progressBps: (curveResults?.[i * 3 + 2]?.result as bigint) ?? 0n,
+  }));
+
+  return { launches: enriched, isLoading: loadingLaunches || (loadingCurves && !curveResults), truncated: offset > 0 };
+}

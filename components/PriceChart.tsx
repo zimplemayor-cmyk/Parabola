@@ -4,24 +4,55 @@ import { useEffect, useMemo, useState } from "react";
 import { usePublicClient } from "wagmi";
 import { CurveChart } from "./CurveChart";
 import { CandleChart } from "./CandleChart";
-import { fetchTrades, tradesToCandles, autoTimeframe, TIMEFRAMES, type Trade, type TimeframeLabel } from "@/lib/trades";
+import { fetchTrades, tradesToCandles, autoTimeframe, TIMEFRAMES, type Trade, type TimeframeLabel, type Candle } from "@/lib/trades";
 
 type ChartMode = "line" | "candles";
+type DisplayMode = "price" | "marketCap";
+
+// Shared across every chart on the site (token pages, anywhere else this
+// mounts), stored client-side only: a chart-type or timeframe pick on one
+// token carries over to the next, matching how a real trading app behaves.
+const MODE_KEY = "parabola-chart-mode";
+const DISPLAY_KEY = "parabola-chart-display";
+
+function readPref<T extends string>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  return (window.localStorage.getItem(key) as T | null) ?? fallback;
+}
 
 export function PriceChart({
   curveAddress,
   fromBlock,
   progress,
+  totalSupply,
 }: {
   curveAddress: `0x${string}` | undefined;
   fromBlock: bigint | undefined;
   progress: number;
+  /** 18-decimal total supply; when provided, unlocks the price/market-cap toggle. */
+  totalSupply?: bigint;
 }) {
   const publicClient = usePublicClient();
   const [trades, setTrades] = useState<Trade[] | null>(null);
   const [fetchFailed, setFetchFailed] = useState(false);
   const [mode, setMode] = useState<ChartMode>("candles");
+  const [display, setDisplay] = useState<DisplayMode>("price");
   const [timeframe, setTimeframe] = useState<TimeframeLabel | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time localStorage read, only possible client-side
+    setMode(readPref(MODE_KEY, "candles"));
+    setDisplay(readPref(DISPLAY_KEY, "price"));
+  }, []);
+
+  function setModePersisted(m: ChartMode) {
+    setMode(m);
+    window.localStorage.setItem(MODE_KEY, m);
+  }
+  function setDisplayPersisted(d: DisplayMode) {
+    setDisplay(d);
+    window.localStorage.setItem(DISPLAY_KEY, d);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +85,18 @@ export function PriceChart({
     [trades, timeframe]
   );
 
+  const wholeSupply = totalSupply !== undefined ? Number(totalSupply) / 1e18 : undefined;
+  const scaledCandles: Candle[] = useMemo(() => {
+    if (display !== "marketCap" || !wholeSupply) return candles;
+    return candles.map((c) => ({
+      time: c.time,
+      open: c.open * wholeSupply,
+      high: c.high * wholeSupply,
+      low: c.low * wholeSupply,
+      close: c.close * wholeSupply,
+    }));
+  }, [candles, display, wholeSupply]);
+
   // No real trades yet (new/quiet token, or the fetch itself failed): fall
   // back to the theoretical bonding-curve shape rather than an empty or
   // fake-looking chart, but say which case it actually is.
@@ -77,18 +120,38 @@ export function PriceChart({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex rounded-full border border-ink-border p-0.5">
-          {(["candles", "line"] as ChartMode[]).map((m) => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              className={`rounded-full px-3 py-1 text-xs font-mono capitalize transition ${
-                mode === m ? "bg-ink-surface text-paper" : "text-paper-faint hover:text-paper-dim"
-              }`}
-            >
-              {m}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex rounded-full border border-ink-border p-0.5">
+            {(["candles", "line"] as ChartMode[]).map((m) => (
+              <button
+                key={m}
+                onClick={() => setModePersisted(m)}
+                className={`rounded-full px-3 py-1 text-xs font-mono capitalize transition ${
+                  mode === m ? "bg-ink-surface text-paper" : "text-paper-faint hover:text-paper-dim"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+          {wholeSupply && (
+            <div className="flex rounded-full border border-ink-border p-0.5">
+              {([
+                ["price", "Price"],
+                ["marketCap", "Market cap"],
+              ] as [DisplayMode, string][]).map(([d, label]) => (
+                <button
+                  key={d}
+                  onClick={() => setDisplayPersisted(d)}
+                  className={`rounded-full px-3 py-1 text-xs font-mono transition ${
+                    display === d ? "bg-ink-surface text-paper" : "text-paper-faint hover:text-paper-dim"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex rounded-full border border-ink-border p-0.5">
           {TIMEFRAMES.map((tf) => (
@@ -105,9 +168,9 @@ export function PriceChart({
         </div>
       </div>
       {mode === "candles" ? (
-        <CandleChart candles={candles} />
+        <CandleChart candles={scaledCandles} />
       ) : (
-        <LineFromCandles candles={candles} />
+        <LineFromCandles candles={scaledCandles} />
       )}
     </div>
   );

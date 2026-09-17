@@ -4,7 +4,7 @@ import { use } from "react";
 import { useCurveForToken, useCurveData, useTokenMeta, useMetadataURIForToken, useLaunchMetadata } from "@/lib/hooks";
 import { TradePanel } from "@/components/TradePanel";
 import { PriceChart } from "@/components/PriceChart";
-import { formatAddress, formatQuote, bpsToPercent } from "@/lib/format";
+import { formatAddress, formatQuote, formatToken, bpsToPercent } from "@/lib/format";
 import { explorerAddressUrl } from "@/lib/contracts";
 
 export default function TokenPage({ params }: { params: Promise<{ address: string }> }) {
@@ -66,9 +66,10 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
             curveAddress={curveAddress}
             fromBlock={creationBlock}
             progress={curve ? Number(curve.progressBps) / 10_000 : 0}
+            totalSupply={totalSupply}
           />
           <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-ink-border pt-6 text-sm sm:grid-cols-4">
-            <Detail label="Total supply" value={totalSupply ? formatQuote(totalSupply, { compact: true }) : "…"} />
+            <Detail label="Total supply" value={totalSupply ? formatToken(totalSupply, { compact: true }) : "…"} />
             <Detail
               label="Graduation at"
               value={curve ? `${formatQuote(curve.graduationThreshold, { compact: true })} USDC` : "…"}
