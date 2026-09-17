@@ -155,9 +155,12 @@ contract BondingCurve is ReentrancyGuard {
 
         emit Buy(msg.sender, recipient, msg.value, tokensOut, protocolCut + creatorCut);
 
+        // Effects before interactions, including the fee accrual, not just
+        // tokensSold/realQuoteReserve.
+        pendingCreatorFees += creatorCut;
+
         IERC20(token).safeTransfer(recipient, tokensOut);
         _send(treasury, protocolCut);
-        pendingCreatorFees += creatorCut;
 
         if (!graduated && realQuoteReserve >= graduationThreshold) {
             graduated = true;
@@ -195,10 +198,12 @@ contract BondingCurve is ReentrancyGuard {
 
         emit Sell(msg.sender, recipient, tokenAmountIn, netOut, protocolCut + creatorCut);
 
+        // Effects before interactions, including the fee accrual.
+        pendingCreatorFees += creatorCut;
+
         IERC20(token).safeTransferFrom(msg.sender, address(this), tokenAmountIn);
         _send(recipient, netOut);
         _send(treasury, protocolCut);
-        pendingCreatorFees += creatorCut;
     }
 
     // -------------------------------------------------------------------
